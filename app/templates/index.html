@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAP Datalake</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
+    <script>
+        // Disable Dropzone auto discover before loading our script
+        Dropzone.autoDiscover = false;
+    </script>
+</head>
+<body id="vanta-bg">
+    <div class="sidebar left-sidebar" id="left-sidebar">
+        <div class="sidebar-content">
+            <h2>Chat History</h2>
+            <!-- Chat history will be added here -->
+        </div>
+        <button class="sidebar-toggle left-toggle" id="left-toggle">
+            <span class="toggle-icon">❮</span>
+        </button>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will be inserted here -->
+        </div>
+        <div class="input-container">
+            <textarea id="user-input" placeholder="Send a message..." rows="1"></textarea>
+            <button id="send-button">
+                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="sidebar right-sidebar" id="right-sidebar">
+        <button class="sidebar-toggle right-toggle" id="right-toggle">
+            <span class="toggle-icon">❯</span>
+        </button>
+        <div class="sidebar-content">
+            <h2>SAP Datalake</h2>
+            
+            <!-- Database Info -->
+            <div class="database-info">
+                <h3>Database Structure</h3>
+                <div class="table-info">
+                    {% for table_name, info in db_info.items() %}
+                        <div class="table-section">
+                            <h4>{{ table_name }}</h4>
+                            <div class="column-list">
+                                {% for column in info.columns %}
+                                    <div class="column-item">{{ column }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- File Upload Sections -->
+            <div class="dropzone-section">
+                <h3>IW38 Orders</h3>
+                <div class="dropzone dropzone-upload" id="dropzone-IW38"></div>
+                <div class="file-list" id="file-list-IW38">
+                    {% if uploads and uploads.IW38 %}
+                        {% for file in uploads.IW38 %}
+                            <div class="file-item">
+                                <span class="file-name">{{ file.name }}</span>
+                                <span class="file-date">{{ file.lastUpdated }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="dropzone-section">
+                <h3>IW68 Notification Items</h3>
+                <div class="dropzone dropzone-upload" id="dropzone-IW68"></div>
+                <div class="file-list" id="file-list-IW68">
+                    {% if uploads and uploads.IW68 %}
+                        {% for file in uploads.IW68 %}
+                            <div class="file-item">
+                                <span class="file-name">{{ file.name }}</span>
+                                <span class="file-date">{{ file.lastUpdated }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="dropzone-section">
+                <h3>IW47 Confirmations</h3>
+                <div class="dropzone dropzone-upload" id="dropzone-IW47"></div>
+                <div class="file-list" id="file-list-IW47">
+                    {% if uploads and uploads.IW47 %}
+                        {% for file in uploads.IW47 %}
+                            <div class="file-item">
+                                <span class="file-name">{{ file.name }}</span>
+                                <span class="file-date">{{ file.lastUpdated }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        VANTA.WAVES({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x6699CC,
+            shininess: 60.00,
+            waveHeight: 40.00,
+            waveSpeed: 0.25,
+            zoom: 0.75
+        });
+    </script>
+</body>
+</html>
