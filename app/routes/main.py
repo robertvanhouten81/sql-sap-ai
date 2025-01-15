@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
+import requests
 from ..services.database_service import DatabaseService
 
 main_bp = Blueprint('main', __name__)
@@ -38,6 +39,108 @@ def home():
     db_info = db_service.get_table_info()
     
     return render_template('index.html', uploads=uploads, db_info=db_info.get('tables', {}))
+
+@main_bp.route('/translate_to_sql', methods=['POST'])
+def translate_to_sql():
+    """Translate a natural language message to SQL using Claude API."""
+    try:
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({'error': 'No message provided'}), 400
+
+        # Call Claude API to translate message to SQL
+        claude_api_url = "https://api.anthropic.com/v1/messages"
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": os.environ.get('CLAUDE_API_KEY'),
+            "anthropic-version": "2023-06-01"
+        }
+        
+        db_structure = """
+Database Structure:
+CREATE TABLE common_fields (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    file_type TEXT,
+    order_number TEXT,
+    notification_number TEXT,
+    breakdown TEXT,
+    functional_location TEXT
+);
+
+CREATE TABLE IW38 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    common_id INTEGER,
+    created_on TEXT,
+    basic_start_date TEXT,
+    equipment TEXT,
+    description TEXT,
+    plant_section TEXT,
+    total_actual_costs TEXT,
+    order_type TEXT,
+    main_workcenter TEXT,
+    maintenance_plan TEXT,
+    actual_finish TEXT,
+    cost_center TEXT,
+    basic_finish_date TEXT,
+    breakdown_duration TEXT,
+    FOREIGN KEY (common_id) REFERENCES common_fields(id)
+);
+
+CREATE TABLE IW68 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    common_id INTEGER,
+    code_group TEXT,
+    problem_group_text TEXT,
+    damage_code TEXT,
+    problem_code_text TEXT,
+    item_text TEXT,
+    cause_code TEXT,
+    cause_group_text TEXT,
+    cause_text TEXT,
+    effect TEXT,
+    reported_by TEXT,
+    FOREIGN KEY (common_id) REFERENCES common_fields(id)
+);
+
+CREATE TABLE IW47 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    common_id INTEGER,
+    created_on TEXT,
+    created_by TEXT,
+    actual_finish_date TEXT,
+    confirmation_number TEXT,
+    employees TEXT,
+    personnel_number TEXT,
+    confirmation_text TEXT,
+    planned_work TEXT,
+    actual_work TEXT,
+    system_status TEXT,
+    work_center TEXT,
+    actual_start_time TEXT,
+    FOREIGN KEY (common_id) REFERENCES common_fields(id)
+);"""
+
+        payload = {
+            "model": "claude-3-haiku-20240307",
+            "max_tokens": 1000,
+            "messages": [{
+                "role": "user",
+                "content": f"""Using the following database structure:
+
+{db_structure}
+
+Convert this message to a SQL query. The query should join tables when needed using common_id. Only return the SQL code, nothing else: {data['message']}"""
+            }]
+        }
+
+        response = requests.post(claude_api_url, json=payload, headers=headers)
+        response.raise_for_status()
+        
+        sql_query = response.json()['content'][0]['text']
+        return jsonify({'query': sql_query})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @main_bp.route('/upload/<dropzone_type>', methods=['POST', 'OPTIONS'])
 def upload_file(dropzone_type):

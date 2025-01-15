@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return table;
     }
 
-    async function sendMessage() {
+async function sendMessage() {
         const message = userInput.value.trim();
         if (!message) return;
 
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
         userInput.value = '';
 
         try {
-            // Check if message starts with SELECT, indicating it's a SQL query
+            // Check if message starts with SELECT, indicating it's a direct SQL query
             if (message.toUpperCase().startsWith('SELECT')) {
                 const response = await fetch('/execute_query', {
                     method: 'POST',
@@ -77,7 +77,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
             } else {
-                const response = await fetch('/send_message', {
+                // Translate message to SQL using Claude API
+                const translateResponse = await fetch('/translate_to_sql', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -85,8 +86,80 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify({ message: message })
                 });
 
-                const data = await response.json();
-                addMessage(data.response, false);
+                const translateData = await translateResponse.json();
+                if (translateData.error) {
+                    addMessage(`Error translating to SQL: ${translateData.error}`, false);
+                    return;
+                }
+
+                // Show SQL verification with SweetAlert
+                const result = await Swal.fire({
+                    title: 'Generated SQL Query',
+                    html: `<pre><code>${translateData.query}</code></pre>`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Execute Query',
+                    cancelButtonText: 'Cancel',
+                    customClass: {
+                        popup: 'swal-wide',
+                        content: 'text-left'
+                    }
+                });
+
+                if (result.isConfirmed) {
+                    // Execute the generated SQL query
+                    const queryResponse = await fetch('/execute_query', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ query: translateData.query })
+                    });
+
+                    const queryData = await queryResponse.json();
+                    if (queryData.error) {
+                        addMessage(`Error executing query: ${queryData.error}`, false);
+                    } else {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'message assistant-message';
+                        
+                        // Create accordion for SQL query
+                        const timestamp = new Date().toLocaleString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        });
+                        
+                        const accordionHtml = `
+                            <div class="sql-accordion">
+                                <div class="sql-accordion-header">
+                                    <span>SQL QUERY - ${timestamp}</span>
+                                    <button class="sql-accordion-toggle">▼</button>
+                                </div>
+                                <div class="sql-accordion-content">
+                                    <pre><code>${translateData.query}</code></pre>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Add accordion and results
+                        messageDiv.innerHTML = accordionHtml + formatSQLResults(queryData.results);
+                        chatMessages.appendChild(messageDiv);
+                        
+                        // Add click handler for accordion toggle
+                        const toggle = messageDiv.querySelector('.sql-accordion-toggle');
+                        const content = messageDiv.querySelector('.sql-accordion-content');
+                        toggle.addEventListener('click', () => {
+                            content.classList.toggle('expanded');
+                            toggle.textContent = content.classList.contains('expanded') ? '▲' : '▼';
+                        });
+                        
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                }
             }
         } catch (error) {
             console.error('Error:', error);

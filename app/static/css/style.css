@@ -483,6 +483,97 @@ body {
     background: #66B2FF !important;
 }
 
+/* SweetAlert Custom Styles */
+.swal-wide {
+    width: 850px !important;
+    max-width: 90% !important;
+    background: rgba(51, 102, 153, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.swal2-popup {
+    font-family: 'Montserrat', sans-serif !important;
+    color: #FFFFFF !important;
+}
+
+.swal2-title {
+    color: #FFFFFF !important;
+}
+
+.swal2-html-container {
+    margin: 1em 1.6em 0.3em !important;
+}
+
+.swal2-html-container pre {
+    background: rgba(102, 153, 204, 0.3) !important;
+    padding: 15px !important;
+    border-radius: 8px !important;
+    overflow-x: auto !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #FFFFFF !important;
+    text-align: left !important;
+    font-family: monospace !important;
+}
+
+.swal2-confirm {
+    background: #66B2FF !important;
+}
+
+.swal2-cancel {
+    background: #6c757d !important;
+}
+
+/* SQL Accordion Styles */
+.sql-accordion {
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(102, 153, 204, 0.2);
+}
+
+.sql-accordion-header {
+    padding: 12px 15px;
+    background: rgba(102, 153, 204, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.sql-accordion-toggle {
+    background: none;
+    border: none;
+    color: #FFFFFF;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 0 5px;
+    transition: transform 0.3s ease;
+}
+
+.sql-accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.sql-accordion-content.expanded {
+    max-height: 500px;
+}
+
+.sql-accordion-content pre {
+    margin: 0;
+    padding: 15px;
+    background: rgba(102, 153, 204, 0.1);
+    overflow-x: auto;
+}
+
+.sql-accordion-content code {
+    font-family: monospace;
+    color: #FFFFFF;
+    font-size: 0.9em;
+}
+
 /* SQL Results Table Styles */
 .sql-results {
     width: 100%;
