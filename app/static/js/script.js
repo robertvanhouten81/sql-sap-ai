@@ -18,7 +18,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function addMessage(message, isUser = true) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isUser ? 'user-message' : 'assistant-message'}`;
-        messageDiv.textContent = message;
+        if (typeof message === 'string') {
+            messageDiv.textContent = message;
+        } else {
+            messageDiv.appendChild(message);
+        }
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
@@ -47,7 +51,49 @@ document.addEventListener('DOMContentLoaded', function() {
         return table;
     }
 
-async function sendMessage() {
+    function formatErrorDetails(error, attempts) {
+        const container = document.createElement('div');
+        container.className = 'error-container';
+        
+        // Main error message
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.textContent = error;
+        container.appendChild(errorMessage);
+        
+        // Attempt details if available
+        if (attempts && attempts.length > 0) {
+            const detailsContainer = document.createElement('div');
+            detailsContainer.className = 'error-details';
+            
+            const toggleButton = document.createElement('button');
+            toggleButton.className = 'error-details-toggle';
+            toggleButton.textContent = 'Show attempt details ▼';
+            
+            const detailsList = document.createElement('div');
+            detailsList.className = 'error-attempts hidden';
+            attempts.forEach(attempt => {
+                const attemptDiv = document.createElement('div');
+                attemptDiv.className = 'error-attempt';
+                attemptDiv.textContent = attempt;
+                detailsList.appendChild(attemptDiv);
+            });
+            
+            toggleButton.addEventListener('click', () => {
+                const isHidden = detailsList.classList.contains('hidden');
+                detailsList.classList.toggle('hidden');
+                toggleButton.textContent = `${isHidden ? 'Hide' : 'Show'} attempt details ${isHidden ? '▲' : '▼'}`;
+            });
+            
+            detailsContainer.appendChild(toggleButton);
+            detailsContainer.appendChild(detailsList);
+            container.appendChild(detailsContainer);
+        }
+        
+        return container;
+    }
+
+    async function sendMessage() {
         const message = userInput.value.trim();
         if (!message) return;
 
@@ -68,11 +114,27 @@ async function sendMessage() {
 
                 const data = await response.json();
                 if (data.error) {
-                    addMessage(`Error executing query: ${data.error}`, false);
+                    addMessage(formatErrorDetails(data.error, data.attempts), false);
                 } else {
                     const messageDiv = document.createElement('div');
                     messageDiv.className = 'message assistant-message';
-                    messageDiv.innerHTML = formatSQLResults(data.results);
+                    let content = '';
+                    
+                    // Add visualization if requested
+                    if (data.visualization_html) {
+                        content += `
+                            <div class="visualization-container">
+                                <iframe 
+                                    id="visualization-frame"
+                                    style="width: 100%; height: 400px; border: none;"
+                                    srcdoc="${data.visualization_html}"
+                                ></iframe>
+                            </div>`;
+                    }
+                    
+                    // Always add results table
+                    content += formatSQLResults(data.results);
+                    messageDiv.innerHTML = content;
                     chatMessages.appendChild(messageDiv);
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
@@ -88,7 +150,7 @@ async function sendMessage() {
 
                 const translateData = await translateResponse.json();
                 if (translateData.error) {
-                    addMessage(`Error translating to SQL: ${translateData.error}`, false);
+                    addMessage(formatErrorDetails(translateData.error, translateData.attempts), false);
                     return;
                 }
 
@@ -107,18 +169,21 @@ async function sendMessage() {
                 });
 
                 if (result.isConfirmed) {
-                    // Execute the generated SQL query
+                    // Execute the generated SQL query with visualization config from backend
                     const queryResponse = await fetch('/execute_query', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ query: translateData.query })
+                        body: JSON.stringify({ 
+                            query: translateData.query,
+                            visualization: translateData.visualization
+                        })
                     });
 
                     const queryData = await queryResponse.json();
                     if (queryData.error) {
-                        addMessage(`Error executing query: ${queryData.error}`, false);
+                        addMessage(formatErrorDetails(queryData.error, queryData.attempts), false);
                     } else {
                         const messageDiv = document.createElement('div');
                         messageDiv.className = 'message assistant-message';
@@ -133,20 +198,45 @@ async function sendMessage() {
                             second: '2-digit'
                         });
                         
-                        const accordionHtml = `
+                        const apiCallsHtml = `
                             <div class="sql-accordion">
                                 <div class="sql-accordion-header">
-                                    <span>SQL QUERY - ${timestamp}</span>
+                                    <span>API Calls - ${timestamp}</span>
                                     <button class="sql-accordion-toggle">▼</button>
                                 </div>
                                 <div class="sql-accordion-content">
-                                    <pre><code>${translateData.query}</code></pre>
+                                    <div class="api-call">
+                                        <h4>1. SQL Generation</h4>
+                                        <pre><code>${translateData.query}</code></pre>
+                                    </div>
+                                    ${translateData.visualization ? `
+                                        <div class="api-call">
+                                            <h4>2. Visualization Configuration</h4>
+                                            <pre><code>${JSON.stringify(translateData.visualization, null, 2)}</code></pre>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         `;
                         
-                        // Add accordion and results
-                        messageDiv.innerHTML = accordionHtml + formatSQLResults(queryData.results);
+                        // Add accordion, visualization (if requested), and results table
+                        let resultContent = '';
+                        
+                        // Add visualization if requested
+                        if (queryData.visualization_html) {
+                            resultContent += `
+                                <div class="visualization-container">
+                                    <iframe 
+                                        id="visualization-frame"
+                                        style="width: 100%; height: 400px; border: none;"
+                                        srcdoc="${queryData.visualization_html}"
+                                    ></iframe>
+                                </div>`;
+                        }
+                        
+                        // Always add results table
+                        resultContent += formatSQLResults(queryData.results);
+                        messageDiv.innerHTML = apiCallsHtml + resultContent;
                         chatMessages.appendChild(messageDiv);
                         
                         // Add click handler for accordion toggle

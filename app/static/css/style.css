@@ -233,96 +233,17 @@ body {
 
 .input-wrapper {
     position: relative;
-    transition: all 0.3s ease;
-    border-radius: 8px;
+    border-radius: 5px;
     display: flex;
     height: 52px;
-    border: 1px solid rgba(102, 178, 255, 0.3);
+    background: #191c29;
     z-index: 1;
-}
-
-.input-wrapper::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 8px;
-    backdrop-filter: blur(200px);
-    background: rgba(102, 153, 204, 0.03);
-    z-index: -1;
-}
-
-.input-wrapper::after {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: 8px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    z-index: -2;
-    box-shadow: 
-        0 0 40px rgba(102, 178, 255, 0.95),
-        0 0 80px rgba(102, 178, 255, 0.8),
-        0 0 120px rgba(102, 178, 255, 0.6),
-        0 0 160px rgba(102, 178, 255, 0.4);
-}
-
-.input-wrapper:focus-within {
-    border-color: transparent;
-}
-
-.input-wrapper:focus-within::after {
-    opacity: 1;
-    animation: rotate-glow 6s linear infinite;
-}
-
-@keyframes rotate-glow {
-    0% {
-        box-shadow: 
-            0 0 30px rgba(102, 178, 255, 0.95),
-            0 0 60px rgba(102, 178, 255, 0.8),
-            0 0 90px rgba(102, 178, 255, 0.6),
-            0 0 120px rgba(102, 178, 255, 0.4);
-        filter: hue-rotate(0deg);
-    }
-    25% {
-        box-shadow: 
-            0 0 35px rgba(102, 178, 255, 0.95),
-            0 0 70px rgba(102, 178, 255, 0.8),
-            0 0 105px rgba(102, 178, 255, 0.6),
-            0 0 140px rgba(102, 178, 255, 0.4);
-        filter: hue-rotate(90deg);
-    }
-    50% {
-        box-shadow: 
-            0 0 40px rgba(102, 178, 255, 0.95),
-            0 0 80px rgba(102, 178, 255, 0.8),
-            0 0 120px rgba(102, 178, 255, 0.6),
-            0 0 160px rgba(102, 178, 255, 0.4);
-        filter: hue-rotate(180deg);
-    }
-    75% {
-        box-shadow: 
-            0 0 35px rgba(102, 178, 255, 0.95),
-            0 0 70px rgba(102, 178, 255, 0.8),
-            0 0 105px rgba(102, 178, 255, 0.6),
-            0 0 140px rgba(102, 178, 255, 0.4);
-        filter: hue-rotate(270deg);
-    }
-    100% {
-        box-shadow: 
-            0 0 30px rgba(102, 178, 255, 0.95),
-            0 0 60px rgba(102, 178, 255, 0.8),
-            0 0 90px rgba(102, 178, 255, 0.6),
-            0 0 120px rgba(102, 178, 255, 0.4);
-        filter: hue-rotate(360deg);
-    }
 }
 
 #user-input {
     width: 100%;
-    padding: 15px 45px 15px 15px;
-    border-radius: 8px;
+    padding: 15px 55px 15px 25px;
+    border-radius: 5px;
     background: none;
     color: #FFFFFF;
     resize: none;
@@ -334,31 +255,30 @@ body {
 }
 
 #user-input::placeholder {
-    color: #FFFFFF;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 #send-button {
     position: absolute;
-    right: 16px;
+    right: 15px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
     color: #FFFFFF;
     cursor: pointer;
-    padding: 8px;
+    padding: 10px;
     z-index: 2;
-    transition: color 0.3s ease, transform 0.2s ease;
-}
-
-#send-button:hover {
-    color: #99CCFF;
-    transform: translateY(-50%) scale(1.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #send-button svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
+    fill: #FFFFFF;
+    stroke: #FFFFFF;
 }
 
 /* Database Info Styles */
@@ -574,12 +494,148 @@ body {
     font-size: 0.9em;
 }
 
+/* Visualization Container Styles */
+.visualization-container {
+    width: 100%;
+    margin: 10px 0;
+    background: rgba(102, 153, 204, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 10px;
+}
+
+/* Error Details Styles */
+.error-container {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.error-message {
+    color: #ff6b6b;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.error-details {
+    background: rgba(102, 153, 204, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.error-details-toggle {
+    width: 100%;
+    padding: 10px;
+    background: rgba(102, 153, 204, 0.3);
+    border: none;
+    color: #FFFFFF;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.error-details-toggle:hover {
+    background: rgba(102, 153, 204, 0.4);
+}
+
+.error-attempts {
+    padding: 10px;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.9);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.error-attempts.hidden {
+    display: none;
+}
+
+.error-attempt {
+    padding: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: pre-wrap;
+}
+
+.error-attempt:last-child {
+    border-bottom: none;
+}
+
+/* Visualization Error Styles */
+.visualization-error {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    color: #FFFFFF;
+}
+
+.visualization-error h4 {
+    color: #ff6b6b;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.visualization-error p {
+    margin: 10px 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.visualization-error ul {
+    list-style: none;
+    padding: 10px;
+    margin: 5px 0;
+    background: rgba(102, 153, 204, 0.1);
+    border-radius: 4px;
+}
+
+.visualization-error li {
+    padding: 4px 8px;
+    margin: 2px 0;
+    font-family: monospace;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* API Call Styles */
+.api-call {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.api-call:last-child {
+    border-bottom: none;
+}
+
+.api-call h4 {
+    color: #66B2FF;
+    margin-bottom: 10px;
+    font-size: 0.95em;
+}
+
+.api-call pre {
+    background: rgba(102, 153, 204, 0.1);
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 0;
+}
+
+.api-call code {
+    font-family: monospace;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.9);
+}
+
 /* SQL Results Table Styles */
 .sql-results {
     width: 100%;
     overflow-x: auto;
     margin: 10px 0;
-    background: rgba(102, 153, 204, 0.2);
+    background: rgba(102, 153, 204, 0.8);
     border-radius: 8px;
     padding: 10px;
 }
