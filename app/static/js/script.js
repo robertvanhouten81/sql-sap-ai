@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // ReportChat overlay handling
+    const reportchatInfo = document.querySelector('.reportchat-info');
     const chatMessages = document.getElementById('chat-messages');
     const userInput = document.getElementById('user-input');
+
+    userInput.addEventListener('focus', function() {
+        reportchatInfo.classList.add('hidden');
+    });
+
     const sendButton = document.getElementById('send-button');
     const leftSidebar = document.getElementById('left-sidebar');
     const rightSidebar = document.getElementById('right-sidebar');

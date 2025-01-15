@@ -2,10 +2,10 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     color: #FFFFFF;
     line-height: 1.5;
     margin: 0;
@@ -112,6 +112,102 @@ body {
     flex-grow: 1;
     overflow-y: auto;
     padding: 20px;
+    padding-top: 10vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.reportchat-info {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 30px;
+    background: rgba(102, 153, 204, 0.8);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 90%;
+    max-width: 800px;
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.reportchat-info.hidden {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+    pointer-events: none;
+}
+
+.reportchat-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.title-with-logos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    height: 30px;
+    object-fit: contain;
+}
+
+.reportchat-header h2 {
+    color: #ffffff;
+    margin: 0;
+    font-size: 1.5em;
+}
+
+.reportchat-header p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1em;
+    max-width: 700px;
+    margin: 20px auto 0;
+    line-height: 1.6;
+}
+
+.example-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.example-card {
+    background: rgba(102, 153, 204, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.example-card:hover {
+    transform: translateY(-2px);
+    background: rgba(102, 153, 204, 0.2);
+}
+
+.example-card h3 {
+    color: #234564;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+.example-card p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95em;
+    line-height: 1.4;
 }
 
 .message {
@@ -135,21 +231,106 @@ body {
     position: relative;
 }
 
+.input-wrapper {
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    display: flex;
+    height: 52px;
+    border: 1px solid rgba(102, 178, 255, 0.3);
+    z-index: 1;
+}
+
+.input-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    backdrop-filter: blur(200px);
+    background: rgba(102, 153, 204, 0.03);
+    z-index: -1;
+}
+
+.input-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: -2;
+    box-shadow: 
+        0 0 40px rgba(102, 178, 255, 0.95),
+        0 0 80px rgba(102, 178, 255, 0.8),
+        0 0 120px rgba(102, 178, 255, 0.6),
+        0 0 160px rgba(102, 178, 255, 0.4);
+}
+
+.input-wrapper:focus-within {
+    border-color: transparent;
+}
+
+.input-wrapper:focus-within::after {
+    opacity: 1;
+    animation: rotate-glow 6s linear infinite;
+}
+
+@keyframes rotate-glow {
+    0% {
+        box-shadow: 
+            0 0 30px rgba(102, 178, 255, 0.95),
+            0 0 60px rgba(102, 178, 255, 0.8),
+            0 0 90px rgba(102, 178, 255, 0.6),
+            0 0 120px rgba(102, 178, 255, 0.4);
+        filter: hue-rotate(0deg);
+    }
+    25% {
+        box-shadow: 
+            0 0 35px rgba(102, 178, 255, 0.95),
+            0 0 70px rgba(102, 178, 255, 0.8),
+            0 0 105px rgba(102, 178, 255, 0.6),
+            0 0 140px rgba(102, 178, 255, 0.4);
+        filter: hue-rotate(90deg);
+    }
+    50% {
+        box-shadow: 
+            0 0 40px rgba(102, 178, 255, 0.95),
+            0 0 80px rgba(102, 178, 255, 0.8),
+            0 0 120px rgba(102, 178, 255, 0.6),
+            0 0 160px rgba(102, 178, 255, 0.4);
+        filter: hue-rotate(180deg);
+    }
+    75% {
+        box-shadow: 
+            0 0 35px rgba(102, 178, 255, 0.95),
+            0 0 70px rgba(102, 178, 255, 0.8),
+            0 0 105px rgba(102, 178, 255, 0.6),
+            0 0 140px rgba(102, 178, 255, 0.4);
+        filter: hue-rotate(270deg);
+    }
+    100% {
+        box-shadow: 
+            0 0 30px rgba(102, 178, 255, 0.95),
+            0 0 60px rgba(102, 178, 255, 0.8),
+            0 0 90px rgba(102, 178, 255, 0.6),
+            0 0 120px rgba(102, 178, 255, 0.4);
+        filter: hue-rotate(360deg);
+    }
+}
+
 #user-input {
     width: 100%;
-    padding: 16px 45px 16px 16px;
-    border: 4px solid #6699CC;
+    padding: 15px 45px 15px 15px;
     border-radius: 8px;
-    background-color: rgba(102, 153, 204, 0.9);
+    background: none;
     color: #FFFFFF;
     resize: none;
     outline: none;
-    max-height: 200px;
     font-size: 1.1em;
-}
-
-#user-input:focus {
-    border-color: #66B2FF;
+    line-height: 1;
+    margin: 0;
+    border: none;
 }
 
 #user-input::placeholder {
@@ -158,17 +339,21 @@ body {
 
 #send-button {
     position: absolute;
-    right: 30px;
-    bottom: 32px;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
     background: none;
     border: none;
     color: #FFFFFF;
     cursor: pointer;
-    padding: 5px;
+    padding: 8px;
+    z-index: 2;
+    transition: color 0.3s ease, transform 0.2s ease;
 }
 
 #send-button:hover {
     color: #99CCFF;
+    transform: translateY(-50%) scale(1.1);
 }
 
 #send-button svg {
