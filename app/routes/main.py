@@ -249,19 +249,19 @@ CREATE TABLE IW47 (
                 "role": "user",
                 "content": f"""Using the following database structure:
 
-{db_structure}
+                {db_structure}
 
-Convert this message to a SQL query. The query should:
-1. Join tables when needed using common_id
-2. Cast numeric columns to FLOAT when they're used in calculations or aggregations:
-   - total_actual_costs should be CAST(total_actual_costs AS FLOAT)
-   - breakdown_duration should be CAST(breakdown_duration AS FLOAT)
-   - Any COUNT, SUM, or AVG operations should be explicit
-3. Use appropriate aliases for computed columns
+                Convert this message to a SQL query. The query should:
+                1. Join tables when needed using common_id
+                2. Cast numeric columns to FLOAT when they're used in calculations or aggregations:
+                - total_actual_costs should be CAST(total_actual_costs AS FLOAT)
+                - breakdown_duration should be CAST(breakdown_duration AS FLOAT)
+                - Any COUNT, SUM, or AVG operations should be explicit
+                3. Use appropriate aliases for computed columns
 
-Only return the SQL code, nothing else: {message}"""
-            }]
-        }
+                Only return the SQL code, nothing else: {message}"""
+                            }]
+                        }
 
         response = requests.post(claude_api_url, json=payload, headers=headers)
         response.raise_for_status()
@@ -277,37 +277,37 @@ Only return the SQL code, nothing else: {message}"""
                     "role": "user",
                     "content": f"""Given this SQL query and database structure:
 
-SQL Query:
-{sql_query}
+                    SQL Query:
+                    {sql_query}
 
-Database Structure:
-{db_structure}
+                    Database Structure:
+                    {db_structure}
 
-For a {viz_type} visualization, I need you to:
+                    For a {viz_type} visualization, I need you to:
 
-1. First, analyze the SQL query to identify which columns will be in the result set
-2. Then, select TWO columns from these results:
-   - For x-axis/labels: A categorical column (text-based data like names, types, or categories)
-   - For y-axis/values: A numerical column that can be aggregated (costs, durations, counts)
+                    1. First, analyze the SQL query to identify which columns will be in the result set
+                    2. Then, select TWO columns from these results:
+                    - For x-axis/labels: A categorical column (text-based data like names, types, or categories)
+                    - For y-axis/values: A numerical column that can be aggregated (costs, durations, counts)
 
-IMPORTANT:
-- Only select columns that will actually appear in the query results
-- The columns must be exactly as they appear in the query (including table prefixes if used)
-- For numerical columns:
-  * Must be explicitly cast as numbers (e.g., CAST(column AS FLOAT))
-  * Must be used in aggregations (SUM, COUNT, AVG)
-  * Must use the exact alias if one is defined in the query
-- For categorical columns:
-  * Must be a text column or a column aliased as a label
-  * Must exist in the SELECT statement
-- Ensure the columns make logical sense for a {viz_type} chart
+                    IMPORTANT:
+                    - Only select columns that will actually appear in the query results
+                    - The columns must be exactly as they appear in the query (including table prefixes if used)
+                    - For numerical columns:
+                    * Must be explicitly cast as numbers (e.g., CAST(column AS FLOAT))
+                    * Must be used in aggregations (SUM, COUNT, AVG)
+                    * Must use the exact alias if one is defined in the query
+                    - For categorical columns:
+                    * Must be a text column or a column aliased as a label
+                    * Must exist in the SELECT statement
+                    - Ensure the columns make logical sense for a {viz_type} chart
 
-Return only a JSON object with this exact format:
-{{"x": "column_name", "y": "column_name"}}
+                    Return only a JSON object with this exact format:
+                    {{"x": "column_name", "y": "column_name"}}
 
-Do not include any explanation or additional text."""
-                }]
-            }
+                    Do not include any explanation or additional text."""
+                                    }]
+                                }
 
             # Try up to 5 times to get valid column configuration
             max_attempts = 5
@@ -347,30 +347,30 @@ Do not include any explanation or additional text."""
                     # Modify the prompt to be more explicit for the next attempt
                     payload['messages'][0]['content'] = f"""Given this SQL query and database structure:
 
-SQL Query:
-{sql_query}
+                        SQL Query:
+                        {sql_query}
 
-Database Structure:
-{db_structure}
+                        Database Structure:
+                        {db_structure}
 
-STRICT REQUIREMENTS for {viz_type} visualization:
+                        STRICT REQUIREMENTS for {viz_type} visualization:
 
-1. First, list out ALL columns that will be in the query results by analyzing the SELECT statement
-2. From these columns ONLY, select:
-   - For x-axis/labels: A categorical column (text data)
-   - For y-axis/values: A numerical column (must be a number or numeric aggregate)
+                        1. First, list out ALL columns that will be in the query results by analyzing the SELECT statement
+                        2. From these columns ONLY, select:
+                        - For x-axis/labels: A categorical column (text data)
+                        - For y-axis/values: A numerical column (must be a number or numeric aggregate)
 
-Rules:
-- Columns MUST exist in the SELECT statement results
-- Column names must match EXACTLY (including any aliases or table prefixes)
-- The y-axis column MUST be numeric (check if it's used in SUM, COUNT, AVG, or other numeric operations)
-- Do not suggest columns from tables unless they appear in the query joins
+                        Rules:
+                        - Columns MUST exist in the SELECT statement results
+                        - Column names must match EXACTLY (including any aliases or table prefixes)
+                        - The y-axis column MUST be numeric (check if it's used in SUM, COUNT, AVG, or other numeric operations)
+                        - Do not suggest columns from tables unless they appear in the query joins
 
-Return ONLY a JSON object:
-{{"x": "column_name", "y": "column_name"}}
+                        Return ONLY a JSON object:
+                        {{"x": "column_name", "y": "column_name"}}
 
-No other text allowed."""
-                
+                        No other text allowed."""
+                                        
                 except Exception as e:
                     error_responses.append(f"Attempt {attempts + 1}: API error - {str(e)}")
                     attempts += 1
