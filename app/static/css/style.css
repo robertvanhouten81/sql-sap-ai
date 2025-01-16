@@ -55,6 +55,8 @@ body {
     padding: 20px;
     height: 100%;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .sidebar-content h2 {
@@ -108,6 +110,31 @@ body {
     margin: 0 auto;
 }
 
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* Firefox Scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
 .chat-messages {
     flex-grow: 1;
     overflow-y: auto;
@@ -115,6 +142,8 @@ body {
     padding-top: 10vh;
     display: flex;
     flex-direction: column;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .reportchat-info {
@@ -213,17 +242,46 @@ body {
 .message {
     padding: 20px;
     margin: 10px 0;
+    margin-left: 10px;
     border-radius: 5px;
 }
 
 .user-message {
     background-color: rgba(49,69,107, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-right: 40px;
+    position: relative;
+}
+
+.user-message::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 15px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid rgba(49,69,107, 0.8);
+}
+
+.user-message::before {
+    content: '';
+    position: absolute;
+    bottom: -11px;
+    left: 14px;
+    width: 0;
+    height: 0;
+    border-left: 11px solid transparent;
+    border-right: 11px solid transparent;
+    border-top: 11px solid rgba(255, 255, 255, 0.1);
+    z-index: -1;
 }
 
 .assistant-message {
     background-color: rgba(102, 178, 255, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-left: 50px;
 }
 
 .input-container {
@@ -475,6 +533,8 @@ body {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease-out;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .sql-accordion-content.expanded {
@@ -502,6 +562,8 @@ body {
     border-radius: 8px;
     overflow: hidden;
     padding: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 /* Error Details Styles */
@@ -548,6 +610,8 @@ body {
     color: rgba(255, 255, 255, 0.9);
     max-height: 300px;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .error-attempts.hidden {
@@ -638,6 +702,8 @@ body {
     background: rgba(60,100,159, 0.8);
     border-radius: 8px;
     padding: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .sql-results table {
