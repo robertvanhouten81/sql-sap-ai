@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Visualization</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+<div id="chart"></div>
+<script>
+// Sample data from the SQL query
+const data = {
+    order_type: ['PM01', 'PM02', 'CM01'],
+    order_count: [150, 75, 25],
+    order_percentage: [60, 30, 10]
+};
+
+// Create pie chart as specified in visualization config
+const trace = {
+    labels: data.order_type,
+    values: data.order_count,
+    type: 'pie',
+    textinfo: 'label+percent',
+    hoverinfo: 'label+value',
+    textposition: 'inside'
+};
+
+const layout = {
+    margin: {t:30, l:30, r:30, b:30},
+    paper_bgcolor: 'rgba(102, 153, 204, 0.1)',
+    plot_bgcolor: 'rgba(102, 153, 204, 0.1)',
+    font: {color: '#FFFFFF'},
+    showlegend: true,
+    height: 400,
+    width: 800
+};
+
+Plotly.newPlot('chart', [trace], layout);
+</script>
+</body>
+</html>

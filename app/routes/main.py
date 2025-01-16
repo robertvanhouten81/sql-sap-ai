@@ -60,10 +60,25 @@ def generate_visualization_html(data, viz_config):
     
     # Validate columns exist in data with detailed error message
     missing_columns = []
-    if x_column not in columns:
+    
+    # Helper function to strip table prefix if present
+    def strip_table_prefix(col):
+        return col.split('.')[-1] if '.' in col else col
+    
+    # Strip any table prefixes for comparison
+    x_col_stripped = strip_table_prefix(x_column)
+    y_col_stripped = strip_table_prefix(y_column)
+    
+    if x_col_stripped not in columns:
         missing_columns.append(f"x-axis column '{x_column}'")
-    if y_column not in columns:
+    if y_col_stripped not in columns:
         missing_columns.append(f"y-axis column '{y_column}'")
+        
+    # Update column names to use stripped versions if they exist
+    if x_col_stripped in columns:
+        x_column = x_col_stripped
+    if y_col_stripped in columns:
+        y_column = y_col_stripped
     
     if missing_columns:
         error_html = f"""
@@ -139,12 +154,24 @@ def generate_visualization_html(data, viz_config):
             height=400
         )
     
-    # Generate HTML
-    return fig.to_html(
+    # Generate HTML with explicit Plotly CDN
+    html = fig.to_html(
         full_html=True,
-        include_plotlyjs=True,
-        config={'responsive': True}
+        include_plotlyjs='https://cdn.plot.ly/plotly-latest.min.js',
+        config={'responsive': True, 'displayModeBar': True}
     )
+    
+    # Add required meta tags and viewport settings
+    html = html.replace('<head>', '''<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    ''')
+    
+    # Add debug logging
+    print("Generated visualization HTML:", html[:500] + "...")  # Print first 500 chars for debugging
+    
+    return html
 
 def extract_visualization_types(message):
     """Extract words starting with @ from the message."""
@@ -362,7 +389,8 @@ CREATE TABLE IW47 (
 
                         Rules:
                         - Columns MUST exist in the SELECT statement results
-                        - Column names must match EXACTLY (including any aliases or table prefixes)
+                        - Column names must match EXACTLY as they appear in the final SELECT statement
+                        - Do NOT include table prefixes unless they are explicitly part of a column alias
                         - The y-axis column MUST be numeric (check if it's used in SUM, COUNT, AVG, or other numeric operations)
                         - Do not suggest columns from tables unless they appear in the query joins
 
@@ -458,6 +486,30 @@ def execute_sql_query():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/test_visualization')
+def test_visualization():
+    """Test route to verify visualization generation."""
+    # Sample data matching your example
+    data = [
+        {"order_type": "PM01", "order_count": 150, "order_percentage": 60},
+        {"order_type": "PM02", "order_count": 75, "order_percentage": 30},
+        {"order_type": "CM01", "order_count": 25, "order_percentage": 10}
+    ]
+    
+    viz_config = {
+        "columns": {
+            "x": "order_type",
+            "y": "order_count"
+        },
+        "type": "pie"
+    }
+    
+    # Generate visualization with debug logging
+    print("Generating test visualization...")
+    html = generate_visualization_html(data, viz_config)
+    print("Test visualization generated successfully")
+    return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
 
 @main_bp.route('/db_info', methods=['GET'])
 def get_db_info():

@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <iframe 
                                     id="visualization-frame"
                                     style="width: 100%; height: 400px; border: none;"
-                                    srcdoc="${data.visualization_html}"
+                                    srcdoc="${data.visualization_html.replace(/"/g, '&quot;')}"
                                 ></iframe>
                             </div>`;
                     }
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <iframe 
                                         id="visualization-frame"
                                         style="width: 100%; height: 400px; border: none;"
-                                        srcdoc="${queryData.visualization_html}"
+                                        srcdoc="${queryData.visualization_html.replace(/"/g, '&quot;')}"
                                     ></iframe>
                                 </div>`;
                         }
