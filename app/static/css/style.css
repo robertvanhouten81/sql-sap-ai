@@ -25,27 +25,28 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: #336699;
+    background: linear-gradient(135deg, #001524, #004B8C);
 }
 
 .title-with-logos {
     display: flex;
     align-items: center;
-    justify-content: center;
     margin-bottom: 15px;
 }
 
 .title-with-logos h2 {
     text-transform: uppercase;
-    background: linear-gradient(to right, #30CFD0 0%, #330867 100%);
+    background: linear-gradient(to right, #d9ebff 0%, #042846 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-size: 5em;
+    font-size: 7em;
     font-family: 'Montserrat', sans-serif;
     margin: 0;
+    line-height: 1.1;
 }
+
 .sidebar {
-    background-color: rgba(60,100,159, 0.8);
+    background-color: rgba(0, 75, 140, 0.8);
     backdrop-filter: blur(10px);
     height: 100vh;
     position: fixed;
@@ -170,15 +171,17 @@ body {
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
+
 .reportchat-info {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 30px;
-    background: transparent;
+    background: rgba(0, 75, 140, 0.1);
+    backdrop-filter: blur(5px);
     border-radius: 8px;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     width: 90%;
     max-width: 800px;
     z-index: 100;
@@ -192,7 +195,7 @@ body {
 }
 
 .reportchat-header {
-    text-align: center;
+    text-align: left;
     margin-bottom: 20px;
 }
 
@@ -200,7 +203,7 @@ body {
     color: #FFFFFF;
     font-size: 1.1em;
     max-width: 700px;
-    margin: 20px auto 0;
+    margin: 20px 0 0;
     line-height: 1.6;
 }
 
@@ -212,7 +215,7 @@ body {
 }
 
 .example-card {
-    background: rgba(60,100,159, 0.95);
+    background: rgba(0, 75, 140, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     padding: 15px;
@@ -222,11 +225,11 @@ body {
 
 .example-card:hover {
     transform: translateY(-2px);
-    background: rgba(60,100,159, 0.2);
+    background: rgba(122, 185, 255, 0.2);
 }
 
 .example-card h3 {
-    color: #234564;
+    color: #E6F3FF;
     margin-bottom: 8px;
     font-size: 1.1em;
 }
@@ -245,7 +248,7 @@ body {
 }
 
 .user-message {
-    background-color: rgba(49,69,107, 0.8);
+    background-color: rgba(0, 21, 36, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-right: 40px;
     position: relative;
@@ -260,7 +263,7 @@ body {
     height: 0;
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
-    border-top: 10px solid rgba(49,69,107, 0.8);
+    border-top: 10px solid rgba(0, 21, 36, 0.8);
 }
 
 .user-message::before {
@@ -277,7 +280,7 @@ body {
 }
 
 .assistant-message {
-    background-color: rgba(102, 178, 255, 0.3);
+    background-color: rgba(122, 185, 255, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-left: 50px;
 }
@@ -299,7 +302,6 @@ body {
 
 .input-wrapper:before {
     content: '';
-    /* background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000); */
     background: linear-gradient(45deg, #7AB9FF, #001524, #B6D9FF, #004B8C, #E6F3FF, #002B47, #0072D4, #3B9DFF);
     position: absolute;
     top: 50%;
@@ -379,7 +381,7 @@ body {
 
 /* Database Info Styles */
 .database-info {
-    background: rgba(60,100,159, 0.2);
+    background: rgba(0, 75, 140, 0.2);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 20px;
@@ -389,7 +391,7 @@ body {
 /* Table Accordion Styles */
 .table-accordion {
     margin: 10px 0;
-    background: rgba(60,100,159, 0.1);
+    background: rgba(0, 75, 140, 0.1);
     border-radius: 4px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -397,7 +399,7 @@ body {
 
 .table-header {
     padding: 12px;
-    background: rgba(60,100,159, 0.2);
+    background: rgba(0, 75, 140, 0.2);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -405,7 +407,7 @@ body {
 }
 
 .table-header h4 {
-    color: #66B2FF;
+    color: #7AB9FF;
     margin: 0;
     font-size: 1em;
 }
@@ -441,7 +443,7 @@ body {
     font-size: 0.9em;
     color: rgba(255, 255, 255, 0.8);
     padding: 4px 8px;
-    background: rgba(60,100,159, 0.1);
+    background: rgba(0, 75, 140, 0.1);
     border-radius: 3px;
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -453,7 +455,7 @@ body {
 
 .dropzone {
     min-height: 100px !important;
-    background: rgba(60,100,159, 0.3) !important;
+    background: rgba(0, 75, 140, 0.3) !important;
     border: 2px dashed rgba(255, 255, 255, 0.3) !important;
     border-radius: 8px !important;
     display: flex;
@@ -465,7 +467,7 @@ body {
 }
 
 .dropzone:hover {
-    background: rgba(60,100,159, 0.4) !important;
+    background: rgba(0, 75, 140, 0.4) !important;
     border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
@@ -483,7 +485,7 @@ body {
 }
 
 .file-item {
-    background: rgba(60,100,159, 0.2);
+    background: rgba(0, 75, 140, 0.2);
     padding: 8px 12px;
     border-radius: 4px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -521,7 +523,7 @@ body {
 
 .dropzone .dz-preview .dz-success-mark,
 .dropzone .dz-preview .dz-error-mark {
-    background: rgba(60,100,159, 0.8) !important;
+    background: rgba(0, 75, 140, 0.8) !important;
     border-radius: 50% !important;
 }
 
@@ -531,14 +533,14 @@ body {
 }
 
 .dropzone .dz-preview .dz-progress .dz-upload {
-    background: #66B2FF !important;
+    background: #7AB9FF !important;
 }
 
 /* SweetAlert Custom Styles */
 .swal-wide {
     width: 850px !important;
     max-width: 90% !important;
-    background: rgba(60,100,159, 0.95) !important;
+    background: rgba(0, 75, 140, 0.95) !important;
     backdrop-filter: blur(10px) !important;
 }
 
@@ -556,7 +558,7 @@ body {
 }
 
 .swal2-html-container pre {
-    background: rgba(60,100,159, 0.3) !important;
+    background: rgba(0, 75, 140, 0.3) !important;
     padding: 15px !important;
     border-radius: 8px !important;
     overflow-x: auto !important;
@@ -567,7 +569,7 @@ body {
 }
 
 .swal2-confirm {
-    background: #66B2FF !important;
+    background: #7AB9FF !important;
 }
 
 .swal2-cancel {
@@ -580,12 +582,12 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     overflow: hidden;
-    background: rgba(60,100,159, 0.8);
+    background: rgba(0, 75, 140, 0.8);
 }
 
 .sql-accordion-header {
     padding: 12px 15px;
-    background: rgba(60,100,159, 0.3);
+    background: rgba(0, 75, 140, 0.3);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -617,7 +619,7 @@ body {
 .sql-accordion-content pre {
     margin: 0;
     padding: 15px;
-    background: rgba(60,100,159, 0.1);
+    background: rgba(0, 75, 140, 0.1);
     overflow-x: auto;
 }
 
@@ -631,7 +633,7 @@ body {
 .visualization-container {
     width: 100%;
     margin: 10px 0;
-    background: rgba(60,100,159, 0.8);
+    background: rgba(0, 75, 140, 0.8);
     border-radius: 8px;
     overflow: hidden;
     padding: 10px;
@@ -652,7 +654,7 @@ body {
 }
 
 .error-details {
-    background: rgba(60,100,159, 0.2);
+    background: rgba(0, 75, 140, 0.2);
     border-radius: 8px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -661,7 +663,7 @@ body {
 .error-details-toggle {
     width: 100%;
     padding: 10px;
-    background: rgba(60,100,159, 0.3);
+    background: rgba(0, 75, 140, 0.3);
     border: none;
     color: #FFFFFF;
     text-align: left;
@@ -673,7 +675,7 @@ body {
 }
 
 .error-details-toggle:hover {
-    background: rgba(60,100,159, 0.4);
+    background: rgba(0, 75, 140, 0.4);
 }
 
 .error-attempts {
@@ -726,7 +728,7 @@ body {
     list-style: none;
     padding: 10px;
     margin: 5px 0;
-    background: rgba(60,100,159, 0.1);
+    background: rgba(0, 75, 140, 0.1);
     border-radius: 4px;
 }
 
@@ -748,13 +750,13 @@ body {
 }
 
 .api-call h4 {
-    color: #66B2FF;
+    color: #7AB9FF;
     margin-bottom: 10px;
     font-size: 0.95em;
 }
 
 .api-call pre {
-    background: rgba(60,100,159, 0.1);
+    background: rgba(0, 75, 140, 0.1);
     padding: 12px;
     border-radius: 4px;
     overflow-x: auto;
@@ -772,7 +774,7 @@ body {
     width: 100%;
     overflow-x: auto;
     margin: 10px 0;
-    background: rgba(60,100,159, 0.8);
+    background: rgba(0, 75, 140, 0.8);
     border-radius: 8px;
     padding: 10px;
     scrollbar-width: thin;
@@ -786,7 +788,7 @@ body {
 }
 
 .sql-results th {
-    background: rgba(60,100,159, 0.3);
+    background: rgba(0, 75, 140, 0.3);
     color: #FFFFFF;
     font-weight: 600;
     text-align: left;
@@ -801,7 +803,7 @@ body {
 }
 
 .sql-results tr:hover {
-    background: rgba(60,100,159, 0.2);
+    background: rgba(0, 75, 140, 0.2);
 }
 
 .sql-results tr:last-child td {
@@ -815,7 +817,7 @@ body {
 }
 
 .data-refresh-section {
-    background: rgba(60,100,159, 0.2);
+    background: rgba(0, 75, 140, 0.2);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 20px;
@@ -825,7 +827,7 @@ body {
 #oldest-file-info {
     margin-bottom: 15px;
     padding: 10px;
-    background: rgba(60,100,159, 0.3);
+    background: rgba(0, 75, 140, 0.3);
     border-radius: 4px;
     font-size: 0.9em;
     color: rgba(255, 255, 255, 0.9);
@@ -834,7 +836,7 @@ body {
 .refresh-button {
     width: 100%;
     padding: 10px 15px;
-    background: #66B2FF;
+    background: #7AB9FF;
     border: none;
     border-radius: 4px;
     color: #FFFFFF;
@@ -844,7 +846,5 @@ body {
 }
 
 .refresh-button:hover {
-    background: #3399FF;
+    background: #0072D4;
 }
-
-/* [Rest of the previous CSS content remains unchanged...] */

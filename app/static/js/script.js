@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
         minWidth: 200.00,
         scale: 1.00,
         scaleMobile: 1.00,
-        color: 0x6699CC,
+        color: 0x216EA3,
         shininess: 60.00,
         waveHeight: 40.00,
         waveSpeed: 0.25,
