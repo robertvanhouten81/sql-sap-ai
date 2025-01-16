@@ -34,15 +34,23 @@ body {
     margin-bottom: 15px;
 }
 
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 .title-with-logos h2 {
     text-transform: uppercase;
-    background: linear-gradient(to right, #d9ebff 0%, #042846 100%);
+    background: linear-gradient(90deg, #ffffff, #00294d, #d9ebff);
+    background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-size: 7em;
     font-family: 'Montserrat', sans-serif;
     margin: 0;
     line-height: 1.1;
+    animation: gradient 30s ease infinite;
 }
 
 .sidebar {
@@ -78,7 +86,7 @@ body {
 }
 
 .sidebar-content {
-    padding: 20px;
+    padding-left: 30px;
     height: 100%;
     overflow-y: auto;
     scrollbar-width: thin;
@@ -298,29 +306,6 @@ body {
     z-index: 1;
     outline: none;
     min-height: 52px;
-}
-
-.input-wrapper:before {
-    content: '';
-    background: linear-gradient(45deg, #7AB9FF, #001524, #B6D9FF, #004B8C, #E6F3FF, #002B47, #0072D4, #3B9DFF);
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-size: 400%;
-    z-index: -1;
-    filter: blur(50px);
-    width: calc(100% + 30px);
-    height: calc(100% + 30px);
-    animation: glowing 20s linear infinite;
-    opacity: 0;
-    transition: opacity .3s ease-in-out;
-    border-radius: 30px;
-}
-
-.input-wrapper:hover:before,
-.input-wrapper:focus-within:before {
-    opacity: 1;
 }
 
 .input-wrapper:after {
@@ -810,11 +795,6 @@ body {
     border-bottom: none;
 }
 
-@keyframes glowing {
-    0% { background-position: 0 0; }
-    50% { background-position: 400% 0; }
-    100% { background-position: 0 0; }
-}
 
 .data-refresh-section {
     background: rgba(0, 75, 140, 0.2);
