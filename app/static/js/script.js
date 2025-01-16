@@ -1,15 +1,37 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // ReportChat overlay handling
+    // Check for required external libraries
+    if (typeof Dropzone === 'undefined') {
+        console.error('Dropzone library not loaded');
+        return;
+    }
+    if (typeof Swal === 'undefined') {
+        console.error('SweetAlert2 library not loaded');
+        return;
+    }
+
+    // ReportChat overlay handling with null checks
     const reportchatInfo = document.querySelector('.reportchat-info');
     const chatMessages = document.getElementById('chat-messages');
     const userInput = document.getElementById('user-input');
     const oldestFileInfo = document.getElementById('oldest-file-info');
     const refreshButton = document.getElementById('refresh-sap-data');
 
-    // Function to fetch and display oldest file info
+    // Validate required DOM elements
+    if (!chatMessages || !userInput || !oldestFileInfo || !refreshButton) {
+        console.error('Required DOM elements not found');
+        return;
+    }
+
+    // Function to fetch and display oldest file info with timeout
     async function updateOldestFileInfo() {
         try {
-            const response = await fetch('/get_oldest_file');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+            const response = await fetch('/get_oldest_file', {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
             const data = await response.json();
             
             if (data.error) {
@@ -170,9 +192,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const message = userInput.value.trim();
         if (!message) return;
 
-        // Hide reportchat info
-        reportchatInfo.classList.add('hidden');
-
         // Add user message to chat
         addMessage(message, true);
         userInput.value = '';
@@ -257,10 +276,43 @@ document.addEventListener('DOMContentLoaded', function() {
                         })
                     });
 
-                    const queryData = await queryResponse.json();
-                    if (queryData.error) {
-                        addMessage(formatErrorDetails(queryData.error, queryData.attempts), false);
-                    } else {
+                    let queryData = await queryResponse.json();
+                    try {
+                        if (queryData.error) {
+                            // If it's a visualization error and we have results, try to create visualization with actual columns
+                            if (queryData.error.includes("Column Selection Error") && queryData.results) {
+                                // Get the actual column names from the results
+                                const columns = Object.keys(queryData.results[0]);
+                                
+                                // Create a new visualization config using the actual columns
+                                const newVisualization = {
+                                    type: translateData.visualization.type,
+                                    x: columns[0], // Use first column for x-axis
+                                    y: columns[1]  // Use second column for y-axis
+                                };
+                                
+                                // Try again with the new visualization config
+                                const retryResponse = await fetch('/execute_query', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({ 
+                                        query: translateData.query,
+                                        visualization: newVisualization
+                                    })
+                                });
+                                
+                                const retryData = await retryResponse.json();
+                                if (!retryData.error) {
+                                    queryData = retryData;
+                                }
+                            } else {
+                                addMessage(formatErrorDetails(queryData.error, queryData.attempts), false);
+                                return;
+                            }
+                        }
+                        
                         const messageDiv = document.createElement('div');
                         messageDiv.className = 'message assistant-message';
                         
@@ -324,6 +376,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                         
                         chatMessages.scrollTop = chatMessages.scrollHeight;
+                    } catch (error) {
+                        console.error('Error processing query data:', error);
+                        addMessage('Error processing query results', false);
                     }
                 }
             }

@@ -64,45 +64,99 @@ def generate_visualization_html(data, viz_config):
     # Validate columns exist in data with detailed error message
     missing_columns = []
     
-    # Helper function to strip table prefix if present
-    def strip_table_prefix(col):
-        return col.split('.')[-1] if '.' in col else col
+    # Helper functions for column name normalization and matching
+    def normalize_column_name(col):
+        # Remove table prefixes, quotes, and normalize case
+        col = col.split('.')[-1] if '.' in col else col
+        col = col.strip('"\'`[]')
+        return col.lower()
     
-    # Strip any table prefixes for comparison
-    x_col_stripped = strip_table_prefix(x_column)
-    y_col_stripped = strip_table_prefix(y_column)
+    def find_matching_column(target, available_columns):
+        target_norm = normalize_column_name(target)
+        
+        # Direct match
+        if target in available_columns:
+            return target
+            
+        # Try normalized match
+        for col in available_columns:
+            if normalize_column_name(col) == target_norm:
+                return col
+                
+        # Try matching aggregated columns
+        if 'count' in target_norm or 'sum' in target_norm or 'avg' in target_norm:
+            for col in available_columns:
+                col_norm = normalize_column_name(col)
+                # Match based on the result part of aggregation
+                if col_norm == target_norm.split('as')[-1].strip():
+                    return col
+        
+        return None
     
-    if x_col_stripped not in columns:
+    # Find matching columns
+    x_col_match = find_matching_column(x_column, columns)
+    y_col_match = find_matching_column(y_column, columns)
+    
+    if not x_col_match:
         missing_columns.append(f"x-axis column '{x_column}'")
-    if y_col_stripped not in columns:
+    if not y_col_match:
         missing_columns.append(f"y-axis column '{y_column}'")
         
-    # Update column names to use stripped versions if they exist
-    if x_col_stripped in columns:
-        x_column = x_col_stripped
-    if y_col_stripped in columns:
-        y_column = y_col_stripped
+    # Update column names to use matched versions
+    if x_col_match:
+        x_column = x_col_match
+    if y_col_match:
+        y_column = y_col_match
     
     if missing_columns:
-        error_html = f"""
-        <div class="visualization-error">
-            <h4>Column Selection Error</h4>
-            <p>The following columns were not found in the query results:</p>
-            <ul>
-                {' '.join(f'<li>{col}</li>' for col in missing_columns)}
-            </ul>
-            <p>Available columns in results:</p>
-            <ul>
-                {' '.join(f'<li>{col}</li>' for col in columns)}
-            </ul>
-            <p>Please modify the query to include the required columns.</p>
-        </div>
-        """
-        return error_html
+        # Try to find alternative columns that could work for visualization
+        numeric_columns = []
+        categorical_columns = []
+        
+        # Analyze first row to determine column types
+        first_row = data[0]
+        for col in columns:
+            try:
+                # Try to convert to float to identify numeric columns
+                if first_row[col] is not None:
+                    float(str(first_row[col]).replace(',', ''))
+                    numeric_columns.append(col)
+            except ValueError:
+                categorical_columns.append(col)
+        
+        if categorical_columns and numeric_columns:
+            # Use the first available categorical and numeric columns
+            x_column = categorical_columns[0]
+            y_column = numeric_columns[0]
+        else:
+            error_html = f"""
+            <div class="visualization-error">
+                <h4>Column Selection Error</h4>
+                <p>Could not find appropriate columns for visualization.</p>
+                <p>Available columns in results:</p>
+                <ul>
+                    {' '.join(f'<li>{col}</li>' for col in columns)}
+                </ul>
+                <p>Please modify the query to include both categorical and numeric columns.</p>
+            </div>
+            """
+            return error_html
 
     # Extract data ensuring consistent format
-    x_data = [str(row[x_column]) for row in data]
-    y_data = [float(row[y_column]) if row[y_column] is not None else 0 for row in data]
+    x_data = []
+    y_data = []
+    
+    for row in data:
+        # Handle x-axis data (categorical)
+        x_value = str(row[x_column]) if row[x_column] is not None else ''
+        x_data.append(x_value)
+        
+        # Handle y-axis data (numeric)
+        try:
+            y_value = str(row[y_column]).replace(',', '') if row[y_column] is not None else '0'
+            y_data.append(float(y_value))
+        except (ValueError, TypeError):
+            y_data.append(0)
     
     # Create figure based on visualization type
     chart_type = viz_config.get('type', 'bar')
@@ -406,9 +460,51 @@ CREATE TABLE IW47 (
                     error_responses.append(f"Attempt {attempts + 1}: API error - {str(e)}")
                     attempts += 1
             
-            # If we get here, all attempts failed
+            # If we get here, all attempts failed, let's execute the query and try to determine columns from results
+            result = db_service.execute_query(sql_query)
+            if not result['success']:
+                return jsonify({
+                    'error': f"Query execution failed: {result.get('error', 'Unknown error')}",
+                    'attempts': error_responses,
+                    'query': sql_query
+                }), 500
+
+            # Get actual columns from query results
+            if result['results']:
+                available_columns = list(result['results'][0].keys())
+                
+                # Try to find appropriate columns for visualization
+                numeric_columns = []
+                categorical_columns = []
+                
+                # Analyze first row to determine column types
+                first_row = result['results'][0]
+                for col in available_columns:
+                    try:
+                        # Try to convert to float to identify numeric columns
+                        if first_row[col] is not None:
+                            float(str(first_row[col]).replace(',', ''))
+                            numeric_columns.append(col)
+                    except ValueError:
+                        categorical_columns.append(col)
+                
+                if categorical_columns and numeric_columns:
+                    # Select first categorical column for x and first numeric column for y
+                    viz_config = {
+                        "type": viz_type,
+                        "columns": {
+                            "x": categorical_columns[0],
+                            "y": numeric_columns[0]
+                        }
+                    }
+                    return jsonify({
+                        'query': sql_query,
+                        'visualization': viz_config
+                    })
+            
+            # If we still can't determine columns, return error
             return jsonify({
-                'error': 'Failed to determine visualization columns after 5 attempts',
+                'error': 'Could not determine appropriate columns for visualization',
                 'attempts': error_responses,
                 'query': sql_query
             }), 500
@@ -490,42 +586,17 @@ def execute_sql_query():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@main_bp.route('/test_visualization')
-def test_visualization():
-    """Test route to verify visualization generation."""
-    # Sample data matching your example
-    data = [
-        {"order_type": "PM01", "order_count": 150, "order_percentage": 60},
-        {"order_type": "PM02", "order_count": 75, "order_percentage": 30},
-        {"order_type": "CM01", "order_count": 25, "order_percentage": 10}
-    ]
-    
-    viz_config = {
-        "columns": {
-            "x": "order_type",
-            "y": "order_count"
-        },
-        "type": "pie"
-    }
-    
-    # Generate visualization with debug logging
-    print("Generating test visualization...")
-    html = generate_visualization_html(data, viz_config)
-    print("Test visualization generated successfully")
-    return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
-
-@main_bp.route('/db_info', methods=['GET'])
-def get_db_info():
-    """Get database structure information."""
-    try:
-        result = db_service.get_table_info()
-        if not result['success']:
-            return jsonify({'error': result.get('error', 'Unknown error')}), 500
+# @main_bp.route('/test_visualization')
+# def test_visualization():
+#     """Test route to verify visualization generation."""
+#     # Sample data matching your example
+#     data = [
+#         {"order_type": "PM01", "order_count": 150, "order_percentage": 60}
             
-        return jsonify(result)
+#         return jsonify(result)
         
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
 
 @main_bp.route('/get_oldest_file', methods=['GET'])
 def get_oldest_file():

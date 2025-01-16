@@ -5,14 +5,17 @@
     font-family: 'Montserrat', sans-serif;
 }
 
+::selection {
+    background-color: #C3CFE2;
+}
+
 body {
-    color: #FFFFFF;
-    line-height: 1.5;
-    margin: 0;
-    overflow: hidden;
+    width: 100%;
+    height: 100vh;
     display: flex;
-    min-height: 100vh;
-    position: relative;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
 }
 
 #vanta-bg {
@@ -25,6 +28,22 @@ body {
     background: #336699;
 }
 
+.title-with-logos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.title-with-logos h2 {
+    text-transform: uppercase;
+    background: linear-gradient(to right, #30CFD0 0%, #330867 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 5em;
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+}
 .sidebar {
     background-color: rgba(60,100,159, 0.8);
     backdrop-filter: blur(10px);
@@ -80,7 +99,7 @@ body {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(60,100,159, 0.8);
+    background: transparent;
     backdrop-filter: blur(10px);
     border: none;
     color: #fff;
@@ -151,19 +170,17 @@ body {
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
-
 .reportchat-info {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 30px;
-    background: rgba(60,100,159, 0.8);
+    background: transparent;
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: none;
     width: 90%;
     max-width: 800px;
-    backdrop-filter: blur(10px);
     z-index: 100;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
@@ -179,33 +196,8 @@ body {
     margin-bottom: 20px;
 }
 
-.title-with-logos {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 15px;
-}
-
-.logo-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.logo {
-    height: 30px;
-    object-fit: contain;
-}
-
-.reportchat-header h2 {
-    color: #ffffff;
-    margin: 0;
-    font-size: 1.5em;
-}
-
 .reportchat-header p {
-    color: rgba(255, 255, 255, 0.9);
+    color: #FFFFFF;
     font-size: 1.1em;
     max-width: 700px;
     margin: 20px auto 0;
