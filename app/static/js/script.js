@@ -3,6 +3,80 @@ document.addEventListener('DOMContentLoaded', function() {
     const reportchatInfo = document.querySelector('.reportchat-info');
     const chatMessages = document.getElementById('chat-messages');
     const userInput = document.getElementById('user-input');
+    const oldestFileInfo = document.getElementById('oldest-file-info');
+    const refreshButton = document.getElementById('refresh-sap-data');
+
+    // Function to fetch and display oldest file info
+    async function updateOldestFileInfo() {
+        try {
+            const response = await fetch('/get_oldest_file');
+            const data = await response.json();
+            
+            if (data.error) {
+                oldestFileInfo.innerHTML = `<p>No files found in datalake</p>`;
+            } else {
+                oldestFileInfo.innerHTML = `
+                    <p><strong>Oldest file:</strong> ${data.name}</p>
+                    <p><strong>Type:</strong> ${data.type}</p>
+                    <p><strong>Last modified:</strong> ${data.last_modified}</p>
+                    <p><strong>Days since update:</strong> ${data.days_old}</p>
+                `;
+            }
+        } catch (error) {
+            console.error('Error fetching oldest file info:', error);
+            oldestFileInfo.innerHTML = `<p>Error loading file information</p>`;
+        }
+    }
+
+    // Function to handle refresh button click
+    async function handleRefresh() {
+        try {
+            refreshButton.disabled = true;
+            const response = await fetch('/refresh_sap_data', {
+                method: 'POST'
+            });
+            const data = await response.json();
+            
+            if (data.error) {
+                Swal.fire({
+                    title: 'Error',
+                    text: data.error,
+                    icon: 'error'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Success',
+                    text: data.message,
+                    icon: 'success'
+                });
+                // Update the file info after successful refresh
+                updateOldestFileInfo();
+            }
+        } catch (error) {
+            console.error('Error refreshing SAP data:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to refresh SAP data',
+                icon: 'error'
+            });
+        } finally {
+            refreshButton.disabled = false;
+        }
+    }
+
+    // Add click handler for refresh button
+    refreshButton.addEventListener('click', handleRefresh);
+
+    // Initial load of oldest file info
+    updateOldestFileInfo();
+    
+    // Initialize right sidebar as expanded
+    const rightSidebar = document.getElementById('right-sidebar');
+    rightSidebar.classList.add('expanded');
+    const rightToggleIcon = document.querySelector('#right-toggle .toggle-icon');
+    if (rightToggleIcon) {
+        rightToggleIcon.textContent = '❯';
+    }
 
     userInput.addEventListener('focus', function() {
         reportchatInfo.classList.add('hidden');
@@ -10,7 +84,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const sendButton = document.getElementById('send-button');
     const leftSidebar = document.getElementById('left-sidebar');
-    const rightSidebar = document.getElementById('right-sidebar');
     const leftToggle = document.getElementById('left-toggle');
     const rightToggle = document.getElementById('right-toggle');
 
@@ -96,6 +169,9 @@ document.addEventListener('DOMContentLoaded', function() {
     async function sendMessage() {
         const message = userInput.value.trim();
         if (!message) return;
+
+        // Hide reportchat info
+        reportchatInfo.classList.add('hidden');
 
         // Add user message to chat
         addMessage(message, true);
@@ -269,9 +345,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Auto-resize textarea
+    function adjustTextareaHeight(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
     userInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
+        adjustTextareaHeight(this);
+    });
+
+    // Initial height adjustment and on focus
+    adjustTextareaHeight(userInput);
+    userInput.addEventListener('focus', function() {
+        adjustTextareaHeight(this);
     });
 
     // Sidebar toggle functionality
@@ -285,6 +371,20 @@ document.addEventListener('DOMContentLoaded', function() {
         rightSidebar.classList.toggle('expanded');
         const icon = rightToggle.querySelector('.toggle-icon');
         icon.textContent = rightSidebar.classList.contains('expanded') ? '❯' : '❮';
+    });
+
+    // Example cards click handling
+    const exampleCards = document.querySelectorAll('.example-card');
+    exampleCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const exampleText = this.querySelector('p').textContent;
+            // Remove the quotes from the example text
+            userInput.value = exampleText.replace(/['"]/g, '');
+            // Hide the reportchat info since we're using the input
+            reportchatInfo.classList.add('hidden');
+            // Focus the input
+            userInput.focus();
+        });
     });
 
     // Initialize dropzones
@@ -306,8 +406,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     const fileItem = document.createElement('div');
                     fileItem.className = 'file-item';
                     fileItem.innerHTML = `
-                        <span class="file-name">${response.filename}</span>
-                        <span class="file-date">${response.lastUpdated}</span>
+                        <div class="file-info">
+                            <span class="file-name">${response.filename}</span>
+                            <span class="file-date">${response.lastUpdated}</span>
+                        </div>
                     `;
                     fileList.insertBefore(fileItem, fileList.firstChild);
                     
@@ -324,6 +426,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     addMessage(`Error uploading ${file.name}: ${errorMessage.error || errorMessage}`, false);
                 });
             }
+        });
+    });
+
+    // Initialize database table accordions
+    const tableHeaders = document.querySelectorAll('.table-header');
+    tableHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.table-toggle');
+            content.classList.toggle('expanded');
+            toggle.textContent = content.classList.contains('expanded') ? '▲' : '▼';
         });
     });
 

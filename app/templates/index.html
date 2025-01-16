@@ -47,7 +47,7 @@
             <div class="example-cards">
                 <div class="example-card">
                     <h3>Cost Analysis</h3>
-                    <p>"Give me the top 10 of most costly repairs in the milk chain"</p>
+                    <p>"give me top 10 of the total actual costs with functional location and plant section @pie"</p>
                 </div>
                 <div class="example-card">
                     <h3>Maintenance Hours</h3>
@@ -83,21 +83,14 @@
         <div class="sidebar-content">
             <h2>SAP Datalake</h2>
             
-            <!-- Database Info -->
-            <div class="database-info">
-                <h3>Database Structure</h3>
-                <div class="table-info">
-                    {% for table_name, info in db_info.items() %}
-                        <div class="table-section">
-                            <h4>{{ table_name }}</h4>
-                            <div class="column-list">
-                                {% for column in info.columns %}
-                                    <div class="column-item">{{ column }}</div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    {% endfor %}
+            <!-- Data Refresh Section -->
+            <div class="data-refresh-section">
+                <div id="oldest-file-info">
+                    <!-- Oldest file info will be displayed here -->
                 </div>
+                <button id="refresh-sap-data" class="refresh-button">
+                    Get latest SAP data
+                </button>
             </div>
 
             <!-- File Upload Sections -->
@@ -108,8 +101,10 @@
                     {% if uploads and uploads.IW38 %}
                         {% for file in uploads.IW38 %}
                             <div class="file-item">
-                                <span class="file-name">{{ file.name }}</span>
-                                <span class="file-date">{{ file.lastUpdated }}</span>
+                                <div class="file-info">
+                                    <span class="file-name">{{ file.name }}</span>
+                                    <span class="file-date">{{ file.lastUpdated }}</span>
+                                </div>
                             </div>
                         {% endfor %}
                     {% endif %}
@@ -123,8 +118,10 @@
                     {% if uploads and uploads.IW68 %}
                         {% for file in uploads.IW68 %}
                             <div class="file-item">
-                                <span class="file-name">{{ file.name }}</span>
-                                <span class="file-date">{{ file.lastUpdated }}</span>
+                                <div class="file-info">
+                                    <span class="file-name">{{ file.name }}</span>
+                                    <span class="file-date">{{ file.lastUpdated }}</span>
+                                </div>
                             </div>
                         {% endfor %}
                     {% endif %}
@@ -138,11 +135,35 @@
                     {% if uploads and uploads.IW47 %}
                         {% for file in uploads.IW47 %}
                             <div class="file-item">
-                                <span class="file-name">{{ file.name }}</span>
-                                <span class="file-date">{{ file.lastUpdated }}</span>
+                                <div class="file-info">
+                                    <span class="file-name">{{ file.name }}</span>
+                                    <span class="file-date">{{ file.lastUpdated }}</span>
+                                </div>
                             </div>
                         {% endfor %}
                     {% endif %}
+                </div>
+            </div>
+
+            <!-- Database Info -->
+            <div class="database-info">
+                <h3>Database Structure</h3>
+                <div class="table-info">
+                    {% for table_name, info in db_info.items() %}
+                        <div class="table-accordion">
+                            <div class="table-header">
+                                <h4>{{ table_name }}</h4>
+                                <button class="table-toggle">▼</button>
+                            </div>
+                            <div class="table-content">
+                                <div class="column-list">
+                                    {% for column in info.columns %}
+                                        <div class="column-item">{{ column }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

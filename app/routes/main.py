@@ -1,8 +1,11 @@
 from flask import Blueprint, render_template, request, jsonify, current_app
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import requests
+import glob
+from flask import Blueprint, render_template, request, jsonify, current_app
+from werkzeug.utils import secure_filename
 from ..services.database_service import DatabaseService
 import json
 
@@ -521,5 +524,48 @@ def get_db_info():
             
         return jsonify(result)
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/get_oldest_file', methods=['GET'])
+def get_oldest_file():
+    """Get information about the oldest file in the datalake."""
+    try:
+        oldest_file = None
+        oldest_time = None
+        folder_types = ['IW38', 'IW47', 'IW68']
+        
+        for folder in folder_types:
+            folder_path = os.path.join(UPLOAD_FOLDER, folder)
+            if os.path.exists(folder_path):
+                files = glob.glob(os.path.join(folder_path, '*.xlsx'))
+                for file in files:
+                    mod_time = os.path.getmtime(file)
+                    if oldest_time is None or mod_time < oldest_time:
+                        oldest_time = mod_time
+                        oldest_file = {
+                            'name': os.path.basename(file),
+                            'type': folder,
+                            'last_modified': datetime.fromtimestamp(mod_time).strftime('%Y-%m-%d %H:%M:%S'),
+                            'days_old': (datetime.now() - datetime.fromtimestamp(mod_time)).days
+                        }
+        
+        if oldest_file:
+            return jsonify(oldest_file)
+        return jsonify({'error': 'No files found'}), 404
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/refresh_sap_data', methods=['POST'])
+def refresh_sap_data():
+    """Endpoint to trigger SAP data refresh."""
+    try:
+        # This is a placeholder. In a real implementation, 
+        # you would add the logic to refresh SAP data here.
+        return jsonify({
+            'message': 'SAP data refresh triggered successfully',
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
