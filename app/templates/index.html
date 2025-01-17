@@ -30,9 +30,59 @@
     </div>
 
     <div class="chat-container">
-        <div class="chat-messages" id="chat-messages">
-            <!-- Messages will be inserted here -->
+<div class="chat-messages" id="chat-messages">
+    <!-- Messages will be inserted here -->
+    <template id="chat-response-template">
+        <!-- Management Summary Section -->
+        <div class="sql-accordion">
+            <div class="sql-accordion-header">
+                <span>Management Summary</span>
+                <button class="sql-accordion-toggle">▼</button>
+            </div>
+            <div class="sql-accordion-content expanded">
+                <div class="management-summary"></div>
+            </div>
         </div>
+
+        <!-- Comprehensive Analysis Section -->
+        <div class="sql-accordion">
+            <div class="sql-accordion-header">
+                <span>Comprehensive Analysis</span>
+                <button class="sql-accordion-toggle">▼</button>
+            </div>
+            <div class="sql-accordion-content">
+                <div class="comprehensive-analysis"></div>
+            </div>
+        </div>
+
+        <!-- API Calls Section -->
+        <div class="sql-accordion">
+            <div class="sql-accordion-header">
+                <span>API Calls</span>
+                <button class="sql-accordion-toggle">▼</button>
+            </div>
+            <div class="sql-accordion-content">
+                <div class="api-calls"></div>
+            </div>
+        </div>
+
+        <!-- Results Table Section -->
+        <div class="sql-accordion">
+            <div class="sql-accordion-header">
+                <span>Table of Results</span>
+                <button class="sql-accordion-toggle">▼</button>
+            </div>
+            <div class="sql-accordion-content">
+                <div class="sql-results">
+                    <table>
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
         <div class="reportchat-info">
             <div class="reportchat-header">
                 <div class="title-with-logos">

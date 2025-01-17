@@ -211,26 +211,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.error) {
                     addMessage(formatErrorDetails(data.error, data.attempts), false);
                 } else {
+                    // Clone the response template
+                    const template = document.getElementById('chat-response-template');
                     const messageDiv = document.createElement('div');
                     messageDiv.className = 'message assistant-message';
-                    let content = '';
+                    messageDiv.appendChild(template.content.cloneNode(true));
+
+                    // Set management summary for direct SQL
+                    const managementSummary = messageDiv.querySelector('.management-summary');
+                    managementSummary.innerHTML = '<p>Direct SQL Query Results</p>';
                     
-                    // Add visualization if requested
-                    if (data.visualization_html) {
-                        content += `
+                    // Set comprehensive analysis
+                    const comprehensiveAnalysis = messageDiv.querySelector('.comprehensive-analysis');
+                    comprehensiveAnalysis.innerHTML = `<p>Executing SQL query: ${message}</p>`;
+
+                    // Set API calls
+                    const apiCalls = messageDiv.querySelector('.api-calls');
+                    apiCalls.innerHTML = `
+                        <div class="api-call">
+                            <h4>Direct SQL Query</h4>
+                            <pre><code>${message}</code></pre>
+                        </div>
+                    `;
+
+                    // Add visualization if available
+                    if (data.visualization?.html) {
+                        const resultsDiv = messageDiv.querySelector('.sql-results');
+                        resultsDiv.insertAdjacentHTML('beforebegin', `
                             <div class="visualization-container">
                                 <iframe 
                                     id="visualization-frame"
                                     style="width: 100%; height: 400px; border: none;"
-                                    srcdoc="${data.visualization_html.replace(/"/g, '&quot;')}"
+                                    srcdoc="${data.visualization.html.replace(/"/g, '&quot;')}"
                                 ></iframe>
-                            </div>`;
+                            </div>
+                        `);
                     }
-                    
-                    // Always add results table
-                    content += formatSQLResults(data.results);
-                    messageDiv.innerHTML = content;
+
+                    // Set results table
+                    const resultsTable = messageDiv.querySelector('.sql-results table');
+                    resultsTable.innerHTML = formatSQLResults(data.results);
+
+                    // Add the message to chat
                     chatMessages.appendChild(messageDiv);
+
+                    // Add click handlers for all accordions
+                    messageDiv.querySelectorAll('.sql-accordion-header').forEach(header => {
+                        const toggle = header.querySelector('.sql-accordion-toggle');
+                        const content = header.nextElementSibling;
+                        header.addEventListener('click', () => {
+                            content.classList.toggle('expanded');
+                            toggle.textContent = content.classList.contains('expanded') ? '▲' : '▼';
+                        });
+                    });
+
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
             } else {
@@ -272,107 +306,88 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         body: JSON.stringify({ 
                             query: translateData.query,
-                            visualization: translateData.visualization
+                            visualization_type: translateData.visualization_type
                         })
                     });
 
                     let queryData = await queryResponse.json();
                     try {
                         if (queryData.error) {
-                            // If it's a visualization error and we have results, try to create visualization with actual columns
-                            if (queryData.error.includes("Column Selection Error") && queryData.results) {
-                                // Get the actual column names from the results
-                                const columns = Object.keys(queryData.results[0]);
-                                
-                                // Create a new visualization config using the actual columns
-                                const newVisualization = {
-                                    type: translateData.visualization.type,
-                                    x: columns[0], // Use first column for x-axis
-                                    y: columns[1]  // Use second column for y-axis
-                                };
-                                
-                                // Try again with the new visualization config
-                                const retryResponse = await fetch('/execute_query', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({ 
-                                        query: translateData.query,
-                                        visualization: newVisualization
-                                    })
-                                });
-                                
-                                const retryData = await retryResponse.json();
-                                if (!retryData.error) {
-                                    queryData = retryData;
-                                }
-                            } else {
-                                addMessage(formatErrorDetails(queryData.error, queryData.attempts), false);
-                                return;
-                            }
+                            addMessage(formatErrorDetails(queryData.error, queryData.attempts), false);
+                            return;
                         }
                         
+                        // Clone the response template
+                        const template = document.getElementById('chat-response-template');
                         const messageDiv = document.createElement('div');
                         messageDiv.className = 'message assistant-message';
+                        messageDiv.appendChild(template.content.cloneNode(true));
+
+                        // Set summaries from HTML
+                        const managementSummary = messageDiv.querySelector('.management-summary');
+                        const comprehensiveAnalysis = messageDiv.querySelector('.comprehensive-analysis');
                         
-                        // Create accordion for SQL query
-                        const timestamp = new Date().toLocaleString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit'
-                        });
-                        
-                        const apiCallsHtml = `
-                            <div class="sql-accordion">
-                                <div class="sql-accordion-header">
-                                    <span>API Calls - ${timestamp}</span>
-                                    <button class="sql-accordion-toggle">▼</button>
-                                </div>
-                                <div class="sql-accordion-content">
-                                    <div class="api-call">
-                                        <h4>1. SQL Generation</h4>
-                                        <pre><code>${translateData.query}</code></pre>
-                                    </div>
-                                    ${translateData.visualization ? `
-                                        <div class="api-call">
-                                            <h4>2. Visualization Configuration</h4>
-                                            <pre><code>${JSON.stringify(translateData.visualization, null, 2)}</code></pre>
-                                        </div>
-                                    ` : ''}
-                                </div>
+                        if (queryData.summaries) {
+                            // Create a temporary container to parse the HTML
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = queryData.summaries;
+                            
+                            // Extract summaries from the parsed HTML
+                            const managementContent = tempDiv.querySelector('.management-summary p')?.textContent;
+                            const analysisContent = tempDiv.querySelector('.comprehensive-summary p')?.textContent;
+                            
+                            // Set the content
+                            managementSummary.innerHTML = `<p>${managementContent || 'Management summary not available.'}</p>`;
+                            comprehensiveAnalysis.innerHTML = `<p>${analysisContent || 'Comprehensive analysis not available.'}</p>`;
+                        } else {
+                            managementSummary.innerHTML = '<p>Management summary not available.</p>';
+                            comprehensiveAnalysis.innerHTML = '<p>Comprehensive analysis not available.</p>';
+                        }
+
+                        // Set API calls
+                        const apiCalls = messageDiv.querySelector('.api-calls');
+                        apiCalls.innerHTML = `
+                            <div class="api-call">
+                                <h4>1. SQL Generation</h4>
+                                <pre><code>${translateData.query}</code></pre>
                             </div>
+                            ${translateData.visualization_type ? `
+                                <div class="api-call">
+                                    <h4>2. Visualization Type</h4>
+                                    <pre><code>${translateData.visualization_type}</code></pre>
+                                </div>
+                            ` : ''}
                         `;
-                        
-                        // Add accordion, visualization (if requested), and results table
-                        let resultContent = '';
-                        
-                        // Add visualization if requested
-                        if (queryData.visualization_html) {
-                            resultContent += `
+
+                        // Add visualization if available
+                        if (queryData.visualization?.html) {
+                            const resultsDiv = messageDiv.querySelector('.sql-results');
+                            resultsDiv.insertAdjacentHTML('beforebegin', `
                                 <div class="visualization-container">
                                     <iframe 
                                         id="visualization-frame"
                                         style="width: 100%; height: 400px; border: none;"
-                                        srcdoc="${queryData.visualization_html.replace(/"/g, '&quot;')}"
+                                        srcdoc="${queryData.visualization.html.replace(/"/g, '&quot;')}"
                                     ></iframe>
-                                </div>`;
+                                </div>
+                            `);
                         }
-                        
-                        // Always add results table
-                        resultContent += formatSQLResults(queryData.results);
-                        messageDiv.innerHTML = apiCallsHtml + resultContent;
+
+                        // Set results table
+                        const resultsTable = messageDiv.querySelector('.sql-results table');
+                        resultsTable.innerHTML = formatSQLResults(queryData.results);
+
+                        // Add the message to chat
                         chatMessages.appendChild(messageDiv);
-                        
-                        // Add click handler for accordion toggle
-                        const toggle = messageDiv.querySelector('.sql-accordion-toggle');
-                        const content = messageDiv.querySelector('.sql-accordion-content');
-                        toggle.addEventListener('click', () => {
-                            content.classList.toggle('expanded');
-                            toggle.textContent = content.classList.contains('expanded') ? '▲' : '▼';
+
+                        // Add click handlers for all accordions
+                        messageDiv.querySelectorAll('.sql-accordion-header').forEach(header => {
+                            const toggle = header.querySelector('.sql-accordion-toggle');
+                            const content = header.nextElementSibling;
+                            header.addEventListener('click', () => {
+                                content.classList.toggle('expanded');
+                                toggle.textContent = content.classList.contains('expanded') ? '▲' : '▼';
+                            });
                         });
                         
                         chatMessages.scrollTop = chatMessages.scrollHeight;
