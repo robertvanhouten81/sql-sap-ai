@@ -264,13 +264,26 @@ class VisualizationProcessor:
         
         # Update layout for non-table visualizations
         if chart_type != 'table':
+            # Use the first color with transparency for background
+            bg_color = f'rgba(9, 91, 157, 0.1)'  # #095B9D with 0.1 opacity
+            
             fig.update_layout(
                 margin=dict(t=30, l=30, r=30, b=30),
-                paper_bgcolor='rgba(102, 153, 204, 0.1)',
-                plot_bgcolor='rgba(102, 153, 204, 0.1)',
+                paper_bgcolor=bg_color,
+                plot_bgcolor=bg_color,
                 font=dict(color='#FFFFFF'),
                 showlegend=True,
                 height=400
+            )
+            
+            # Update axes for better visibility
+            fig.update_xaxes(
+                gridcolor='#095B9D',
+                zerolinecolor='#095B9D'
+            )
+            fig.update_yaxes(
+                gridcolor='#095B9D',
+                zerolinecolor='#095B9D'
             )
             
         return fig
