@@ -216,33 +216,40 @@ class VisualizationProcessor:
 
     def _create_figure(self, chart_type: str, x_data: List, y_data: List, x_label: str, y_label: str) -> go.Figure:
         """Create Plotly figure based on chart type."""
+        # Define color palette
+        colors = ['#095B9D', '#06526e', '#15259d', '#099d39', '#066e28']
+        
         if chart_type == 'pie':
             fig = go.Figure(data=[go.Pie(
                 labels=x_data,
-                values=y_data
+                values=y_data,
+                marker=dict(colors=colors)
             )])
         elif chart_type == 'bar':
             fig = go.Figure(data=[go.Bar(
                 x=x_data,
-                y=y_data
+                y=y_data,
+                marker=dict(color=colors[0])
             )])
         elif chart_type == 'line':
             fig = go.Figure(data=[go.Scatter(
                 x=x_data,
                 y=y_data,
-                mode='lines+markers'
+                mode='lines+markers',
+                line=dict(color=colors[0]),
+                marker=dict(color=colors[1])
             )])
         elif chart_type == 'table':
             fig = go.Figure(data=[go.Table(
                 header=dict(
                     values=[x_label, y_label],
-                    fill_color='rgba(102, 153, 204, 0.5)',
+                    fill_color=colors[0],
                     align='left',
                     font=dict(color='white')
                 ),
                 cells=dict(
                     values=[x_data, y_data],
-                    fill_color='rgba(102, 153, 204, 0.1)',
+                    fill_color=colors[1],
                     align='left',
                     font=dict(color='white')
                 )
@@ -304,119 +311,97 @@ class VisualizationProcessor:
             from anthropic import Anthropic
             client = Anthropic()
             
-            # Create prompt for Claude
-            columns = list(data[0].keys()) if data else []
-            sample_data = json.dumps(data[:3], indent=2) if data else "No data available"
-            
             # Get database structure from SQLGenerator
             from ..agents.sql_generator import SQLGenerator
             db_structure = SQLGenerator().db_structure
             
-            prompt = f"""Using this database structure:
+            # Create prompt for Claude
+            columns = list(data[0].keys()) if data else []
+            sample_data = json.dumps(data[:3], indent=2) if data else "No data available"
+            
+            # First prompt to get initial query
+            initial_prompt = f"""Using this database structure:
 
 {db_structure}
 
-And given this data with columns {columns} and sample data:
+And this sample data with columns {columns}:
 {sample_data}
 
-Generate a SQL query optimized for a {chart_type} chart. Requirements:
-- For pie charts: SELECT category_column, SUM(CAST(numeric_column AS FLOAT)) as value
-- For bar charts: SELECT category_column, SUM(CAST(numeric_column AS FLOAT)) as value
-- For line charts: SELECT time_column, SUM(CAST(numeric_column AS FLOAT)) as value
-- Join tables using common_id when needed
-- Always use proper table names from the schema
+Generate a SQL query to analyze this data. Return ONLY the raw SQL query, no explanations or formatting."""
 
-Return ONLY the raw SQL query, no explanations or formatting."""
+            # Get initial query
+            message = client.messages.create(
+                model="claude-3-sonnet-20240229",
+                max_tokens=1000,
+                system="You are a SQL expert. Return ONLY the raw SQL query without any explanations or formatting.",
+                messages=[{"role": "user", "content": initial_prompt}]
+            )
             
-            max_attempts = 4
-            attempts = 0
+            initial_query = message.content[0].text.strip()
             
-            while attempts < max_attempts:
-                message = client.messages.create(
-                    model="claude-3-sonnet-20240229",
-                    max_tokens=1000,
-                    system="You are a SQL expert. Return ONLY the raw SQL query without any explanations or formatting.",
-                    messages=[{"role": "user", "content": prompt}]
-                )
+            # Second prompt to optimize for visualization
+            viz_prompt = f"""Given this SQL query:
+{initial_query}
+
+How would you modify it for a {chart_type} chart? Requirements:
+- For pie charts: Need a category column and a numeric sum, like: SELECT category, SUM(CAST(number AS FLOAT)) as value
+- For bar charts: Need a category column and a numeric sum, like: SELECT category, SUM(CAST(number AS FLOAT)) as value
+- For line charts: Need a time-based column and a numeric sum, like: SELECT date, SUM(CAST(number AS FLOAT)) as value
+- Keep any existing WHERE conditions and table joins
+- Use proper table names from the schema
+
+Return ONLY the modified SQL query, no explanations or formatting."""
+
+            # Get visualization-optimized query
+            message = client.messages.create(
+                model="claude-3-sonnet-20240229",
+                max_tokens=1000,
+                system="You are a SQL expert. Return ONLY the modified SQL query without any explanations or formatting.",
+                messages=[{"role": "user", "content": viz_prompt}]
+            )
+            
+            final_query = message.content[0].text.strip()
+            
+            # Log both queries
+            logger.info({
+                "agent": "VisualizationProcessor",
+                "action": "generated_queries",
+                "initial_query": initial_query,
+                "visualization_query": final_query
+            })
+
+            # Execute the visualization query
+            import os
+            from ..services.database_service import DatabaseService
+            db_path = os.path.join('datalake', 'datalake.db')
+            db_service = DatabaseService(db_path)
+            result = db_service.execute_query(final_query)
+            
+            if result['success']:
+                columns = []
+                if result.get('results'):
+                    first_row = result['results'][0]
+                    columns = list(first_row.keys())
                 
-                response = message.content[0].text.strip()
-                
-                # Log the received response
                 logger.info({
                     "agent": "VisualizationProcessor",
-                    "action": "received_chart_query",
-                    "response": response
+                    "action": "query_execution_success",
+                    "columns": columns
                 })
                 
-                # Validate SQL query structure
-                if not response.upper().startswith('SELECT'):
-                    logger.warning({
-                        "agent": "VisualizationProcessor",
-                        "action": "invalid_query_format",
-                        "response": response
-                    })
-                    attempts += 1
-                    continue
-                
-                try:
-                    # Execute the optimized query
-                    import os
-                    from ..services.database_service import DatabaseService
-                    db_path = os.path.join('datalake', 'datalake.db')
-                    db_service = DatabaseService(db_path)
-                    result = db_service.execute_query(response)
-                    
-                    # If query executes successfully, it's valid regardless of results
-                    if result['success']:
-                        # Get column info from result metadata even if no rows returned
-                        columns = []
-                        if result.get('results'):
-                            first_row = result['results'][0]
-                            columns = list(first_row.keys())
-                        
-                        logger.info({
-                            "agent": "VisualizationProcessor",
-                            "action": "query_execution_success",
-                            "columns": columns,
-                            "has_results": bool(result.get('results'))
-                        })
-                        
-                        # Return success even without results - the query is valid
-                        return {
-                            "success": True,
-                            "data": result.get('results', []),
-                            "columns": {
-                                "x": columns[0] if columns else None,
-                                "y": columns[1] if len(columns) >= 2 else None
-                            },
-                            "optimized_query": response
-                        }
-                    
-                    # If query didn't succeed, log and continue
-                    logger.warning({
-                        "agent": "VisualizationProcessor",
-                        "action": "query_execution_failed",
-                        "error": result.get('error', 'Unknown error')
-                    })
-                
-                except Exception as db_error:
-                    logger.error({
-                        "agent": "VisualizationProcessor",
-                        "action": "execute_chart_query",
-                        "error": str(db_error)
-                    })
-                
-                attempts += 1
-                logger.warning({
-                    "agent": "VisualizationProcessor",
-                    "action": "chart_query_retry",
-                    "attempt": attempts,
-                    "response": response
-                })
+                return {
+                    "success": True,
+                    "data": result.get('results', []),
+                    "columns": {
+                        "x": columns[0] if columns else None,
+                        "y": columns[1] if len(columns) >= 2 else None
+                    },
+                    "optimized_query": final_query
+                }
             
             return {
                 "success": False,
-                "error": f"Failed to generate valid SQL query after {max_attempts} attempts"
+                "error": "Failed to execute visualization query"
             }
             
         except Exception as e:
