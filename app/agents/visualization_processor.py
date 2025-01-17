@@ -22,6 +22,30 @@ class VisualizationProcessor:
             - html: the generated HTML if successful
             - error: error message if unsuccessful
         """
+        # Get chart-specific query suggestions from Claude if visualization type is specified
+        if viz_config.get('type') in ['pie', 'bar', 'line']:
+            chart_query = self._get_chart_query(data, viz_config['type'])
+            if chart_query.get('error'):
+                logger.error({
+                    "agent": "VisualizationProcessor",
+                    "action": "chart_query_failed",
+                    "error": chart_query['error']
+                })
+                return {
+                    "success": False,
+                    "error": chart_query['error'],
+                    "html": self._generate_error_html(list(data[0].keys()) if data else [])
+                }
+            
+            # Use the optimized data and columns for visualization
+            if chart_query.get('success'):
+                logger.info({
+                    "agent": "VisualizationProcessor",
+                    "action": "using_optimized_chart_data",
+                    "columns": chart_query['columns']
+                })
+                data = chart_query['data']
+                viz_config['columns'] = chart_query['columns']
         logger.info({
             "agent": "VisualizationProcessor",
             "action": "starting_visualization",
@@ -260,6 +284,107 @@ class VisualizationProcessor:
         ''')
         
         return html
+
+    def _get_chart_query(self, data: List[Dict[str, Any]], chart_type: str) -> Dict[str, Any]:
+        """
+        Get chart-specific query suggestions from Claude.
+        
+        Args:
+            data: List of dictionaries containing query results
+            chart_type: Type of chart (pie, bar, line)
+            
+        Returns:
+            Dict containing:
+            - success: boolean indicating if query was generated
+            - data: processed data if successful
+            - columns: suggested x and y columns
+            - error: error message if unsuccessful
+        """
+        try:
+            from anthropic import Anthropic
+            client = Anthropic()
+            
+            # Create prompt for Claude
+            columns = list(data[0].keys()) if data else []
+            sample_data = json.dumps(data[:3], indent=2) if data else "No data available"
+            
+            prompt = f"""Given this data structure with columns {columns} and sample data:
+            {sample_data}
+            
+            Generate a SQL query optimized for a {chart_type} chart. Requirements:
+            - For pie charts: SELECT category_column, SUM(numeric_column) as value
+            - For bar charts: SELECT category_column, SUM(numeric_column) as value
+            - For line charts: SELECT time_column, SUM(numeric_column) as value
+            
+            Return ONLY the raw SQL query, no explanations or formatting."""
+            
+            max_attempts = 4
+            attempts = 0
+            
+            while attempts < max_attempts:
+                message = client.messages.create(
+                    model="claude-3-sonnet-20240229",
+                    max_tokens=1000,
+                    system="You are a SQL expert. Return ONLY the raw SQL query without any explanations or formatting.",
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                
+                response = message.content[0].text.strip()
+                
+                # Check if response is a valid SQL query
+                if response.upper().startswith('SELECT'):
+                    try:
+                        # Execute the optimized query
+                        import os
+                        from ..services.database_service import DatabaseService
+                        db_path = os.path.join('datalake', 'datalake.db')
+                        db_service = DatabaseService(db_path)
+                        result = db_service.execute_query(response)
+                        
+                        if result['success'] and result['results']:
+                            # Get the first two columns for x and y
+                            first_row = result['results'][0]
+                            columns = list(first_row.keys())
+                            if len(columns) >= 2:
+                                return {
+                                    "success": True,
+                                    "data": result['results'],
+                                    "columns": {
+                                        "x": columns[0],
+                                        "y": columns[1]
+                                    },
+                                    "optimized_query": response  # Return the optimized query
+                                }
+                    except Exception as db_error:
+                        logger.error({
+                            "agent": "VisualizationProcessor",
+                            "action": "execute_chart_query",
+                            "error": str(db_error)
+                        })
+                
+                attempts += 1
+                logger.warning({
+                    "agent": "VisualizationProcessor",
+                    "action": "chart_query_retry",
+                    "attempt": attempts,
+                    "response": response
+                })
+            
+            return {
+                "success": False,
+                "error": f"Failed to generate valid SQL query after {max_attempts} attempts"
+            }
+            
+        except Exception as e:
+            logger.error({
+                "agent": "VisualizationProcessor",
+                "action": "get_chart_query",
+                "error": str(e)
+            })
+            return {
+                "success": False,
+                "error": f"Failed to get chart query: {str(e)}"
+            }
 
     def _generate_error_html(self, columns: List[str]) -> str:
         """Generate error HTML with available columns information."""

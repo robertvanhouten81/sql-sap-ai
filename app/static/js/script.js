@@ -229,17 +229,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     const apiCalls = messageDiv.querySelector('.api-calls');
                     apiCalls.innerHTML = `
                         <div class="api-call">
-                            <h4>Direct SQL Query</h4>
+                            <h4>1. Direct SQL Query</h4>
                             <pre><code>${message}</code></pre>
                         </div>
+                        ${data.visualization?.visualization_query ? `
+                            <div class="api-call">
+                                <h4>2. Chart-Optimized Query</h4>
+                                <pre><code>${data.visualization.visualization_query}</code></pre>
+                            </div>
+                        ` : ''}
                     `;
 
                     // Add visualization if available
                     if (data.visualization?.html) {
-                        const resultsDiv = messageDiv.querySelector('.sql-results');
-                        resultsDiv.insertAdjacentHTML('beforebegin', `
+                        const managementSummaryAccordion = messageDiv.querySelector('.sql-accordion');
+                        managementSummaryAccordion.insertAdjacentHTML('beforebegin', `
                             <div class="visualization-container">
-                                <iframe 
+                                <iframe
                                     id="visualization-frame"
                                     style="width: 100%; height: 400px; border: none;"
                                     srcdoc="${data.visualization.html.replace(/"/g, '&quot;')}"
@@ -356,15 +362,21 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <h4>2. Visualization Type</h4>
                                     <pre><code>${translateData.visualization_type}</code></pre>
                                 </div>
+                                ${queryData.visualization?.visualization_query ? `
+                                    <div class="api-call">
+                                        <h4>3. Chart-Optimized Query</h4>
+                                        <pre><code>${queryData.visualization.visualization_query}</code></pre>
+                                    </div>
+                                ` : ''}
                             ` : ''}
                         `;
 
                         // Add visualization if available
                         if (queryData.visualization?.html) {
-                            const resultsDiv = messageDiv.querySelector('.sql-results');
-                            resultsDiv.insertAdjacentHTML('beforebegin', `
+                            const managementSummaryAccordion = messageDiv.querySelector('.sql-accordion');
+                            managementSummaryAccordion.insertAdjacentHTML('beforebegin', `
                                 <div class="visualization-container">
-                                    <iframe 
+                                    <iframe
                                         id="visualization-frame"
                                         style="width: 100%; height: 400px; border: none;"
                                         srcdoc="${queryData.visualization.html.replace(/"/g, '&quot;')}"

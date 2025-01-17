@@ -89,7 +89,7 @@ class AgentCoordinator:
         except Exception as e:
             return {"error": f"Error generating SQL query: {str(e)}"}
             
-    def process_query_results(self, query: str, query_results: dict, visualization_type: str = None) -> dict:
+    def process_query_results(self, query: str, query_results: dict, visualization_type: str = None, skip_column_detection: bool = False) -> dict:
         """
         Second phase: Process query results after user approval.
         
@@ -97,6 +97,7 @@ class AgentCoordinator:
             query: The executed SQL query
             query_results: Results from executing the query
             visualization_type: Type of visualization if specified
+            skip_column_detection: Whether to skip SQLGenerator's column detection
             
         Returns:
             Dict containing:
@@ -114,21 +115,34 @@ class AgentCoordinator:
                     "action": "starting_visualization",
                     "type": visualization_type
                 })
-                viz_config = self.sql_generator.get_visualization_columns(
-                    query,
-                    visualization_type
-                )
-                
-                if "error" not in viz_config:
+
+                if skip_column_detection:
+                    # Let VisualizationProcessor handle column selection
                     viz_result = self.viz_processor.generate_visualization(
                         query_results["results"],
-                        {
-                            "type": visualization_type,
-                            "columns": viz_config
-                        }
+                        {"type": visualization_type}
                     )
                     if viz_result["success"]:
                         viz_html = viz_result["html"]
+                        # Pass the optimized query to the frontend
+                        if "optimized_query" in viz_result:
+                            viz_result["visualization_query"] = viz_result["optimized_query"]
+                else:
+                    # Use SQLGenerator's column detection
+                    viz_config = self.sql_generator.get_visualization_columns(
+                        query,
+                        visualization_type
+                    )
+                    if "error" not in viz_config:
+                        viz_result = self.viz_processor.generate_visualization(
+                            query_results["results"],
+                            {
+                                "type": visualization_type,
+                                "columns": viz_config
+                            }
+                        )
+                        if viz_result["success"]:
+                            viz_html = viz_result["html"]
             
             # 2. Generate summaries
             self.logger.info({
@@ -143,11 +157,17 @@ class AgentCoordinator:
             
             summaries_html = self.summary_generator.format_summaries_html(summaries)
             
-            return {
+            response = {
                 "success": True,
                 "visualization_html": viz_html,
                 "summaries_html": summaries_html
             }
+            
+            # Add visualization query if available
+            if viz_result and viz_result.get("visualization_query"):
+                response["visualization_query"] = viz_result["visualization_query"]
+                
+            return response
             
         except Exception as e:
             return {"error": f"Error processing query results: {str(e)}"}

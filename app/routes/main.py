@@ -135,10 +135,12 @@ def execute_sql_query():
             return jsonify({'error': query_result.get('error', 'Unknown error')}), 500
             
         # Process results with visualization and summaries
+        visualization_type = data.get('visualization_type')
         process_result = agent_coordinator.process_query_results(
             data['query'],
             query_result,
-            data.get('visualization_type')
+            visualization_type,
+            skip_column_detection=bool(visualization_type)  # Skip if we have a visualization type
         )
         
         if "error" in process_result:
