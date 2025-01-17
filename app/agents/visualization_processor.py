@@ -308,15 +308,25 @@ class VisualizationProcessor:
             columns = list(data[0].keys()) if data else []
             sample_data = json.dumps(data[:3], indent=2) if data else "No data available"
             
-            prompt = f"""Given this data structure with columns {columns} and sample data:
-            {sample_data}
+            # Get database structure from SQLGenerator
+            from ..agents.sql_generator import SQLGenerator
+            db_structure = SQLGenerator().db_structure
             
-            Generate a SQL query optimized for a {chart_type} chart. Requirements:
-            - For pie charts: SELECT category_column, SUM(numeric_column) as value
-            - For bar charts: SELECT category_column, SUM(numeric_column) as value
-            - For line charts: SELECT time_column, SUM(numeric_column) as value
-            
-            Return ONLY the raw SQL query, no explanations or formatting."""
+            prompt = f"""Using this database structure:
+
+{db_structure}
+
+And given this data with columns {columns} and sample data:
+{sample_data}
+
+Generate a SQL query optimized for a {chart_type} chart. Requirements:
+- For pie charts: SELECT category_column, SUM(CAST(numeric_column AS FLOAT)) as value
+- For bar charts: SELECT category_column, SUM(CAST(numeric_column AS FLOAT)) as value
+- For line charts: SELECT time_column, SUM(CAST(numeric_column AS FLOAT)) as value
+- Join tables using common_id when needed
+- Always use proper table names from the schema
+
+Return ONLY the raw SQL query, no explanations or formatting."""
             
             max_attempts = 4
             attempts = 0
@@ -331,36 +341,70 @@ class VisualizationProcessor:
                 
                 response = message.content[0].text.strip()
                 
-                # Check if response is a valid SQL query
-                if response.upper().startswith('SELECT'):
-                    try:
-                        # Execute the optimized query
-                        import os
-                        from ..services.database_service import DatabaseService
-                        db_path = os.path.join('datalake', 'datalake.db')
-                        db_service = DatabaseService(db_path)
-                        result = db_service.execute_query(response)
-                        
-                        if result['success'] and result['results']:
-                            # Get the first two columns for x and y
+                # Log the received response
+                logger.info({
+                    "agent": "VisualizationProcessor",
+                    "action": "received_chart_query",
+                    "response": response
+                })
+                
+                # Validate SQL query structure
+                if not response.upper().startswith('SELECT'):
+                    logger.warning({
+                        "agent": "VisualizationProcessor",
+                        "action": "invalid_query_format",
+                        "response": response
+                    })
+                    attempts += 1
+                    continue
+                
+                try:
+                    # Execute the optimized query
+                    import os
+                    from ..services.database_service import DatabaseService
+                    db_path = os.path.join('datalake', 'datalake.db')
+                    db_service = DatabaseService(db_path)
+                    result = db_service.execute_query(response)
+                    
+                    # If query executes successfully, it's valid regardless of results
+                    if result['success']:
+                        # Get column info from result metadata even if no rows returned
+                        columns = []
+                        if result.get('results'):
                             first_row = result['results'][0]
                             columns = list(first_row.keys())
-                            if len(columns) >= 2:
-                                return {
-                                    "success": True,
-                                    "data": result['results'],
-                                    "columns": {
-                                        "x": columns[0],
-                                        "y": columns[1]
-                                    },
-                                    "optimized_query": response  # Return the optimized query
-                                }
-                    except Exception as db_error:
-                        logger.error({
+                        
+                        logger.info({
                             "agent": "VisualizationProcessor",
-                            "action": "execute_chart_query",
-                            "error": str(db_error)
+                            "action": "query_execution_success",
+                            "columns": columns,
+                            "has_results": bool(result.get('results'))
                         })
+                        
+                        # Return success even without results - the query is valid
+                        return {
+                            "success": True,
+                            "data": result.get('results', []),
+                            "columns": {
+                                "x": columns[0] if columns else None,
+                                "y": columns[1] if len(columns) >= 2 else None
+                            },
+                            "optimized_query": response
+                        }
+                    
+                    # If query didn't succeed, log and continue
+                    logger.warning({
+                        "agent": "VisualizationProcessor",
+                        "action": "query_execution_failed",
+                        "error": result.get('error', 'Unknown error')
+                    })
+                
+                except Exception as db_error:
+                    logger.error({
+                        "agent": "VisualizationProcessor",
+                        "action": "execute_chart_query",
+                        "error": str(db_error)
+                    })
                 
                 attempts += 1
                 logger.warning({
